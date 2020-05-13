@@ -1,4 +1,6 @@
-"""Top-level package for nl-open-data."""
+"""Top-level package for nl-open-data.
+
+.. include:: ../README.rst"""
 
 __author__ = """Daniel Kapitan"""
 __email__ = 'daniel@kapitan.net'
