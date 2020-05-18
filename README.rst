@@ -10,7 +10,7 @@ nl-open-data
         :target: https://travis-ci.com/dkapitan/nl_open_data
 
 .. image:: https://readthedocs.org/projects/nl-open-data/badge/?version=latest
-        :target: https://nl-open-data.readthedocs.io/en/latest/?badge=latest
+        :target: https://dkapitan.github.io/nl-open-data
         :alt: Documentation Status
 
 

@@ -22,6 +22,7 @@ import prefect
 from prefect import task, Parameter, Flow
 from prefect.tasks.shell import ShellTask
 from prefect.utilities.tasks import unmapped
+from prefect.engine.executors import DaskExecutor
 
 from nimbletl.tasks import curl_cmd, cbsodata_to_gbq, excel_to_gbq, unzip
 from nimbletl.utilities import clean_python_name
@@ -80,6 +81,7 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
             location=GCP.location,
         )
 
+
 gcp = Parameter("gcp", required=True)
 filepath = Parameter("filepath", required=True)
 curl_download = ShellTask(name="curl_download")
@@ -90,26 +92,35 @@ task_unzip = task(unzip)
 
 
 with Flow("CBS regionaal") as flow:
-    # TODO: fix UnicodeDecodeError when writing to Google Drive    
+    # TODO: fix UnicodeDecodeError when writing to Google Drive
     curl_command = curl_cmd(URL_PC6HUISNR, filepath)
     curl_download = curl_download(command=curl_command)
     gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
-    regio = regio(identifier="84721NED", destination_table='cbs.regionale_indeling2020', GCP=gcp)
+    regio = regio(
+        identifier="84721NED", destination_table="cbs.regionale_indeling2020", GCP=gcp
+    )
     kwb = kwb.map(
         identifier=list(ODATA_KWB.values()),
         destination_table=[f"cbs.kwb{jaar}" for jaar in ODATA_KWB.keys()],
         GCP=unmapped(gcp),
     )
 
+
 def main(config):
+    """Executes cbs.regionaal.flow in DaskExecutor.
+    """
+    
+    executor = DaskExecutor(n_workers=8)
     flow.run(
+        executor=executor,
         parameters={
             "gcp": config.gcp,
             "filepath": config.path.root
             / config.path.cbs
             / URL_PC6HUISNR.split("/")[-1],
-        }
+        },
     )
+
 
 if __name__ == "__main__":
     config = get_config("dataverbinders")
