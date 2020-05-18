@@ -16,8 +16,9 @@ dependencies:
   - pandas >=1.0.0
   - pandas-gbq
   - pip
-  - prefect[all_extras]
+  - prefect[google]
   - pip:
+      - cbsodata
       - simpy
       - xmltodict
   - python >=3.8.0 # using dataclasess and zipfile.Path
@@ -26,6 +27,7 @@ dependencies:
   - scikit-learn
   - scipy
   - sqlalchemy
+  - xlrd
 
   # packages for development, no separate dev option in conda
   - black
