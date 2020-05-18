@@ -82,42 +82,70 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
         )
 
 
+@task(skip_on_upstream_skip=False)
+def kwb_to_gbq(
+    destination_table="cbs.kerncijfers_wijken_buurten", credentials=None, GCP=None
+):
+    """Loads kerncijfers wijken- en buurten into `cbs.kerncijfers_wijken_buurten`.
+    
+    Column names are converted to `clean_python_name`. Existing tables are replaced.
+
+    Args:
+        - destination_table (str): name of destination table in BigQuery in format `dataset.tablename`
+        - credentials (google.auth.credentials.Credentials): credentials for project and BigQuery
+        - GCP (dataclass): configuration object with `project` and `location` attributes
+
+    Returns:
+        None
+  
+  """
+    # TODO: add kwarg jaar to add verslagjaar as partition or column to allow different versions
+    dfs = [
+        pd.DataFrame(cbsodata.get_data(identifier))
+        .rename(columns=clean_python_name)
+        .assign(jaar=jaar)
+        for jaar, identifier in ODATA_KWB.items()
+    ]
+    pd.concat(dfs).to_gbq(
+        destination_table,
+        project_id=GCP.project,
+        credentials=credentials,
+        if_exists="replace",
+        location=GCP.location,
+    )
+
+
 gcp = Parameter("gcp", required=True)
 filepath = Parameter("filepath", required=True)
 curl_download = ShellTask(name="curl_download")
 regio = task(cbsodata_to_gbq, name="84721NED")
-kwb = task(cbsodata_to_gbq)
 task_excel = task(excel_to_gbq)
 task_unzip = task(unzip)
 
 
 with Flow("CBS regionaal") as flow:
     # TODO: fix UnicodeDecodeError when writing to Google Drive
-    curl_command = curl_cmd(URL_PC6HUISNR, filepath)
-    curl_download = curl_download(command=curl_command)
-    gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
-    regio = regio(
-        identifier="84721NED", destination_table="cbs.regionale_indeling2020", GCP=gcp
-    )
-    kwb = kwb.map(
-        identifier=list(ODATA_KWB.values()),
-        destination_table=[f"cbs.kwb{jaar}" for jaar in ODATA_KWB.keys()],
-        GCP=unmapped(gcp),
-    )
+    # curl_command = curl_cmd(URL_PC6HUISNR, filepath)
+    # curl_download = curl_download(command=curl_command)
+    # gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
+    # regio = regio(
+    #     identifier="84721NED", destination_table="cbs.regionale_indeling2020", GCP=gcp
+    # )
+    kwb = kwb_to_gbq(GCP=gcp)
 
 
 def main(config):
     """Executes cbs.regionaal.flow in DaskExecutor.
     """
-    
+
     executor = DaskExecutor(n_workers=8)
     flow.run(
         executor=executor,
         parameters={
             "gcp": config.gcp,
-            "filepath": config.path.root
-            / config.path.cbs
-            / URL_PC6HUISNR.split("/")[-1],
+            # "filepath": config.path.root
+            # / config.path.cbs
+            # / URL_PC6HUISNR.split("/")[-1],
         },
     )
 
