@@ -19,7 +19,7 @@ Datawarehouse of various Dutch open data sources with focus on healthcare and pu
 
 
 * Free software: MIT license
-* Documentation: https://dkapitan.github.io/nl-open-data/nl_open_data
+* Documentation: https://dkapitan.github.io/nl-open-data
 
 
 Installation
