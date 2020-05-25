@@ -10,6 +10,7 @@ dependencies:
   - google-cloud-core
   - google-cloud-bigquery
   - google-cloud-storage
+  - jq
   - lxml
   - nomkl
   - numpy
