@@ -1,6 +1,13 @@
 nl\_open\_data package
 ======================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    nl_open_data.flows
+
 Submodules
 ----------
 

@@ -1,0 +1,263 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>nl_open_data.flows.cbs.regionaal &#8212; nl-open-data 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for nl_open_data.flows.cbs.regionaal</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Dataflow for regionaal data from Statistics Netherlands (Centraal Bureau voor Statistiek, CBS).</span>
+
+<span class="sd">Loads the following CBS datasets into BigQuery:</span>
+<span class="sd">    - Mapping of all postal code + housenumber to neighbourhood, district and municipalities,</span>
+<span class="sd">        see `Buurt, wijk en gemeente voor postcode-huisnummer (2019) &lt;https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer, wijk and gemeente&gt;`_</span>
+<span class="sd">    - `Kerncijfers wijken en buurten &lt;https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019&gt;`_</span>
+<span class="sd">    - `Regionale indelingen &lt;https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232&gt;`_</span>
+<span class="sd">    - `Regionale kerncijfers uit ruim 50 CBS-statistieken. &lt;https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230&gt;`_ </span>
+<span class="sd">        Uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.</span>
+<span class="sd">    - `Gezondheid per wijk en buurt 2016 &lt;https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137&gt;`_</span>
+<span class="sd">    </span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
+
+
+<span class="kn">from</span> <span class="nn">google.cloud</span> <span class="kn">import</span> <span class="n">bigquery</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">prefect</span>
+<span class="kn">from</span> <span class="nn">prefect</span> <span class="kn">import</span> <span class="n">task</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">Flow</span>
+<span class="kn">from</span> <span class="nn">prefect.tasks.shell</span> <span class="kn">import</span> <span class="n">ShellTask</span>
+<span class="kn">from</span> <span class="nn">prefect.utilities.tasks</span> <span class="kn">import</span> <span class="n">unmapped</span>
+<span class="kn">from</span> <span class="nn">prefect.engine.executors</span> <span class="kn">import</span> <span class="n">DaskExecutor</span>
+
+<span class="kn">from</span> <span class="nn">nimbletl.tasks</span> <span class="kn">import</span> <span class="n">curl_cmd</span><span class="p">,</span> <span class="n">cbsodatav3_to_gbq</span>
+<span class="kn">from</span> <span class="nn">nimbletl.utilities</span> <span class="kn">import</span> <span class="n">clean_python_name</span>
+<span class="kn">from</span> <span class="nn">nl_open_data.config</span> <span class="kn">import</span> <span class="n">get_config</span>
+
+<span class="n">URL_TABLES</span> <span class="o">=</span> <span class="s2">&quot;https://opendata.cbs.nl/ODataCatalog/Tables?$format=json&quot;</span>
+<span class="n">URL_PC6HUISNR</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;https://www.cbs.nl/-/media/_excel/2019/42/2019-cbs-pc6huisnr20190801_buurt.zip&quot;</span>
+<span class="p">)</span>
+
+<span class="n">ODATA_REGIONAAL</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># Kerncijfers wijken en buurten</span>
+    <span class="s2">&quot;84583NED&quot;</span><span class="p">,</span>  <span class="c1"># 2019</span>
+    <span class="s2">&quot;84286NED&quot;</span><span class="p">,</span>  <span class="c1"># 2018</span>
+    <span class="s2">&quot;83765NED&quot;</span><span class="p">,</span>  <span class="c1"># 2017</span>
+    <span class="s2">&quot;83487NED&quot;</span><span class="p">,</span>  <span class="c1"># 2016</span>
+    <span class="s2">&quot;83220NED&quot;</span><span class="p">,</span>  <span class="c1"># 2015</span>
+    <span class="s2">&quot;82931NED&quot;</span><span class="p">,</span>  <span class="c1"># 2014</span>
+    <span class="s2">&quot;82339NED&quot;</span><span class="p">,</span>  <span class="c1"># 2013</span>
+    <span class="c1"># Regionale indelingen</span>
+    <span class="s2">&quot;84721NED&quot;</span><span class="p">,</span>
+    <span class="c1"># Grote bevolkingstabel per pc4-leeftijd-geslacht vanaf 1999</span>
+    <span class="c1"># &quot;83502NED&quot;,</span>
+<span class="p">]</span>
+
+<span class="n">ODATA_RIVM</span> <span class="o">=</span> <span class="s2">&quot;50052NED&quot;</span>  <span class="c1"># https://statline.rivm.nl/portal.html?_la=nl&amp;_catalog=RIVM&amp;tableId=50052NED&amp;_theme=72</span>
+
+
+<span class="n">ODATA_BEVOLKING</span> <span class="o">=</span> <span class="s2">&quot;03759ned&quot;</span>  <span class="c1"># https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=03759ned&amp;_theme=259</span>
+
+
+<span class="nd">@task</span><span class="p">(</span><span class="n">skip_on_upstream_skip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">pc6huisnr_to_gbq</span><span class="p">(</span><span class="n">zipfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        - zipfile (str): path to downloaded zipfile</span>
+<span class="sd">        - credentials (Google credentials): GCP credentials</span>
+<span class="sd">        - GCP (GCP config dataclass)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[google.cloud.bigquery.job.LoadJob]</span>
+
+<span class="sd">    Source: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="n">zipfile</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipfile</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">zipfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="n">clean_python_name</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+        <span class="p">}</span>
+
+    <span class="n">bq</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">project</span><span class="p">)</span>
+    <span class="n">job_config</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">LoadJobConfig</span><span class="p">()</span>
+    <span class="n">job_config</span><span class="o">.</span><span class="n">write_disposition</span> <span class="o">=</span> <span class="s2">&quot;WRITE_TRUNCATE&quot;</span>
+    <span class="n">jobs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">bq</span><span class="o">.</span><span class="n">load_table_from_dataframe</span><span class="p">(</span>
+                <span class="n">dataframe</span><span class="o">=</span><span class="n">v</span><span class="p">,</span>
+                <span class="n">destination</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;cbs&quot;</span><span class="p">,</span> <span class="n">k</span><span class="p">]),</span>
+                <span class="n">project</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">project</span><span class="p">,</span>
+                <span class="n">job_config</span><span class="o">=</span><span class="n">job_config</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">location</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">jobs</span>
+
+
+<span class="nd">@task</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;CBS ODATA Tables&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">odatav3_catalog_to_gbq</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="s2">&quot;cbs&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Loads odatav3 catalog of all tables.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bq</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">project</span><span class="p">)</span>
+    <span class="n">job_config</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">LoadJobConfig</span><span class="p">()</span>
+    <span class="n">job_config</span><span class="o">.</span><span class="n">write_disposition</span> <span class="o">=</span> <span class="s2">&quot;WRITE_TRUNCATE&quot;</span>
+    <span class="n">tables</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">URL_TABLES</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">load_table_from_dataframe</span><span class="p">(</span>
+        <span class="n">dataframe</span><span class="o">=</span><span class="n">tables</span><span class="p">,</span>
+        <span class="n">destination</span><span class="o">=</span><span class="s2">&quot;cbs.tables_v3&quot;</span><span class="p">,</span>
+        <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">project</span><span class="p">,</span>
+        <span class="n">location</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">location</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">job</span>
+
+
+<span class="n">gcp</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gcp&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">filepath</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;filepath&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">curl_download</span> <span class="o">=</span> <span class="n">ShellTask</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;curl_download&quot;</span><span class="p">)</span>
+<span class="n">regionaal</span> <span class="o">=</span> <span class="n">task</span><span class="p">(</span><span class="n">cbsodatav3_to_gbq</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;regionaal&quot;</span><span class="p">,</span> <span class="n">skip_on_upstream_skip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">rivm</span> <span class="o">=</span> <span class="n">task</span><span class="p">(</span><span class="n">cbsodatav3_to_gbq</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivm&quot;</span><span class="p">)</span>
+
+
+
+<span class="k">with</span> <span class="n">Flow</span><span class="p">(</span><span class="s2">&quot;CBS regionaal&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">flow</span><span class="p">:</span>
+    <span class="c1"># TODO: fix UnicodeDecodeError when writing to Google Drive</span>
+    <span class="n">curl_command</span> <span class="o">=</span> <span class="n">curl_cmd</span><span class="p">(</span><span class="n">URL_PC6HUISNR</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span>
+    <span class="n">curl_download</span> <span class="o">=</span> <span class="n">curl_download</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="n">curl_command</span><span class="p">)</span>
+    <span class="n">gwb</span> <span class="o">=</span> <span class="n">pc6huisnr_to_gbq</span><span class="p">(</span><span class="n">zipfile</span><span class="o">=</span><span class="n">filepath</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="n">gcp</span><span class="p">,</span> <span class="n">upstream_tasks</span><span class="o">=</span><span class="p">[</span><span class="n">curl_download</span><span class="p">])</span>
+    <span class="n">regionaal</span> <span class="o">=</span> <span class="n">regionaal</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">ODATA_REGIONAAL</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="n">unmapped</span><span class="p">(</span><span class="n">gcp</span><span class="p">))</span>
+    <span class="n">rivm</span> <span class="o">=</span> <span class="n">rivm</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">ODATA_RIVM</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="s2">&quot;rivm&quot;</span><span class="p">,</span> <span class="n">third_party</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="n">gcp</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../../nl_open_data.flows.cbs.html#nl_open_data.flows.cbs.regionaal.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Executes cbs.regionaal.flow in DaskExecutor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">DaskExecutor</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">flow</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">executor</span><span class="o">=</span><span class="n">executor</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;gcp&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">gcp</span><span class="p">,</span>
+            <span class="s2">&quot;filepath&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">root</span>
+            <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">cbs</span>
+            <span class="o">/</span> <span class="n">URL_PC6HUISNR</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;dataverbinders&quot;</span><span class="p">)</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">nl-open-data</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme.html">nl-open-data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">nl_open_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../history.html">History</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Daniel Kapitan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
