@@ -91,4 +91,3 @@ bq-datasets:
 	bq --location=EU mk -d --description "Data from CBS Statline" cbs
 	bq --location=EU mk -d --description "Data from Kadaster" kadaster
 	bq --location=EU mk -d --description "Data from Vektis" vektis
-

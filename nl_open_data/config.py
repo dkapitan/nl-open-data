@@ -80,7 +80,7 @@ def get_config(config):
             ),
         ),
         "dataverbinders": dict(
-            gcp=GCP(project="dataverbinders", bucket="dataverbinders", location="EU"),
+            gcp=GCP(project="dataverbinders-dev", bucket="dataverbinders", location="EU"),
             path=Paths(
                 root=Path.home() / "nl-open-data",
                 agb=Path("vektis/agb/FAGBX_All_P!Q0"),
