@@ -90,6 +90,15 @@ def get_config(config):
                 tmp=Path("tmp"),
             ),
         ),
+        "txe": dict(
+            gcp=GCP(project="dataverbinders-dev", location="EU"),
+            path=Paths(
+                root=Path.home() / "Documents/Werk/de_dataverbinders",
+                cbs=Path("test"),
+                bag=Path("inspireadressen"),
+                tmp=Path("output"),
+            ),
+        ),
     }
     try:
         return Config(**configs[config])
