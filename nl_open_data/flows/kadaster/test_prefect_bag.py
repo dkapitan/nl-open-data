@@ -5,11 +5,11 @@ from config import get_config
 from lxml import etree, objectify
 import xmltodict
 # from tasks import curl_cmd, download, unzip, create_dir
-from itertools import count
 import prefect
 from prefect import task, unmapped, Parameter, Flow
 from prefect.engine.results import PrefectResult
 from google.cloud import bigquery
+from bag_schemas import schema
 
 # Loading 'txe' configuration.
 CONFIG = get_config("txe")
@@ -29,6 +29,8 @@ OUTPUT_DIR = CONFIG.path.root / CONFIG.path.tmp
 # TEST constants of BAG files.
 TEST_WPL_FILE = TESTING / (f"9999WPL{BAG_VERSION}" + ".zip")
 TEST_NUM_FILE = TESTING / (f"9999NUM{BAG_VERSION}" + ".zip")
+TEST_PND_FILE = TESTING / (f"9999PND{BAG_VERSION}" + ".zip")
+TEST_VBO_FILE = TESTING / (f"9999VBO{BAG_VERSION}" + ".zip")
 
 # BAG files as constants.
 WPL_FILE = BAG / (f"9999WPL{BAG_VERSION}" + ".zip")
@@ -112,58 +114,55 @@ def create_ndjson(bag_file, xml_file, ndjson_dir, root_tag):
 
 
 @task
-def load_bq(bag_name, path_bag):
-    client = bigquery.Client(project=GCP.project)
-
-    dataset_ref = client.dataset(DATASET)
-    table_ref = dataset_ref.table(bag_name.name)
-    job_config = bigquery.LoadJobConfig()
-    job_config.source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
-    job_config.autodetect = True
+def load_bq(name_bag, path_bag, schema_bag):
+    table_ref = dataset_ref.table(name_bag.name)
+    job_config.schema = schema_bag
+    # job_config.autodetect = True
 
     with open(path_bag, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
 
     job.result()  # Waits for table load to complete.
 
-    print(f"Loaded {job.output_rows} rows into {DATASET}: {bag_name.name}.")
-
-
-def main():
-    # xml_wpl, dir_wpl = create_xml_list(WPL_FILE)
-    # xml_opr, dir_opr = create_xml_list(OPR_FILE)
-    # xml_num, dir_num = create_xml_list(NUM_FILE)
-    # xml_lig, dir_lig = create_xml_list(LIG_FILE)
-    # xml_sta, dir_sta = create_xml_list(STA_FILE)
-    # xml_pnd, dir_pnd = create_xml_list(PND_FILE)
-    # xml_vbo, dir_vbo = create_xml_list(VBO_FILE)
-
-    # TESTING
-    # xml_wpl, dir_wpl = create_xml_list(TEST_WPL_FILE)
-    # xml_num, dir_num = create_xml_list(TEST_NUM_FILE)
-    # print(xml_num)
-    # print(dir_num)
-
-    # print(dir_num)
-
-    # create_ndjson(TEST_WPL_FILE, xml_wpl, dir_wpl, WPL_ROOT)
-    # create_ndjson(TEST_NUM_FILE, xml_num, dir_num, NUM_ROOT)
-    print("Pickle Rick")
+    print(f"Loaded {job.output_rows} rows into {DATASET}: {name_bag.name}.")
 
 
 with Flow("BAG-Extract") as flow:
-    # wpl_xml, wpl_dir = create_xml_list.run(TEST_WPL_FILE)
-    # wpl_mapped = create_ndjson.map(bag_file=unmapped(TEST_WPL_FILE), xml_file=wpl_xml, ndjson_dir=unmapped(wpl_dir), root_tag=unmapped(WPL_ROOT))
-    # load_bq.map(bag_name=unmapped(wpl_dir), path_bag=wpl_mapped)
+    client = bigquery.Client(project=GCP.project)
 
+    dataset_ref = client.dataset(DATASET)
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
+    # job_config.autodetect = True
+    # job_config.schema = schema
+    
+    # wpl_xml, wpl_dir = create_xml_list.run(WPL_FILE)
+    # wpl_mapped = create_ndjson.map(bag_file=unmapped(WPL_FILE), xml_file=wpl_xml, ndjson_dir=unmapped(wpl_dir), root_tag=unmapped(WPL_ROOT))
+    # load_bq.map(name_bag=unmapped(wpl_dir), path_bag=wpl_mapped, schema_bag=unmapped(schema["wpl"]))
 
-    num_xml, num_dir = create_xml_list.run(TEST_NUM_FILE)
-    num_mapped = create_ndjson.map(bag_file=unmapped(TEST_NUM_FILE), xml_file=num_xml, ndjson_dir=unmapped(num_dir), root_tag=unmapped(NUM_ROOT))
-    load_bq.map(bag_name=unmapped(num_dir), path_bag=num_mapped)
+    # num_xml, num_dir = create_xml_list.run(TEST_NUM_FILE)
+    # num_mapped = create_ndjson.map(bag_file=unmapped(TEST_NUM_FILE), xml_file=num_xml, ndjson_dir=unmapped(num_dir), root_tag=unmapped(NUM_ROOT))
+    # load_bq.map(name_bag=unmapped(num_dir), path_bag=num_mapped, schema_bag=unmapped(schema["num"]))
 
     # opr_xml, opr_dir = create_xml_list.run(OPR_FILE)
     # opr_mapped = create_ndjson.map(bag_file=unmapped(OPR_FILE), xml_file=opr_xml, ndjson_dir=unmapped(opr_dir), root_tag=unmapped(OPR_ROOT))
-    # load_bq.map(bag_name=unmapped(opr_dir), path_bag=opr_mapped)
+    # load_bq.map(name_bag=unmapped(opr_dir), path_bag=opr_mapped, schema_bag=unmapped(schema["opr"]))
+
+    # lig_xml, lig_dir = create_xml_list.run(LIG_FILE)
+    # lig_mapped = create_ndjson.map(bag_file=unmapped(LIG_FILE), xml_file=lig_xml, ndjson_dir=unmapped(lig_dir), root_tag=unmapped(LIG_ROOT))
+    # load_bq.map(name_bag=unmapped(lig_dir), path_bag=lig_mapped, schema_bag=unmapped(schema["lig"]))
+
+    # sta_xml, sta_dir = create_xml_list.run(STA_FILE)
+    # sta_mapped = create_ndjson.map(bag_file=unmapped(STA_FILE), xml_file=sta_xml, ndjson_dir=unmapped(sta_dir), root_tag=unmapped(STA_ROOT))
+    # load_bq.map(name_bag=unmapped(sta_dir), path_bag=sta_mapped, schema_bag=unmapped(schema["sta"]))
+
+    # pnd_xml, pnd_dir = create_xml_list.run(TEST_PND_FILE)
+    # pnd_mapped = create_ndjson.map(bag_file=unmapped(TEST_PND_FILE), xml_file=pnd_xml, ndjson_dir=unmapped(pnd_dir), root_tag=unmapped(PND_ROOT))
+    # load_bq.map(name_bag=unmapped(pnd_dir), path_bag=pnd_mapped, schema_bag=unmapped(schema["pnd"]))
+
+    vbo_xml, vbo_dir = create_xml_list.run(TEST_VBO_FILE)
+    vbo_mapped = create_ndjson.map(bag_file=unmapped(TEST_VBO_FILE), xml_file=vbo_xml, ndjson_dir=unmapped(vbo_dir), root_tag=unmapped(VBO_ROOT))
+    load_bq.map(name_bag=unmapped(vbo_dir), path_bag=vbo_mapped, schema_bag=unmapped(schema["vbo"]))
 
 
 def prefect_main():
@@ -171,5 +170,4 @@ def prefect_main():
 
 
 if __name__ == "__main__":
-    # main()
     prefect_main()
