@@ -7,7 +7,11 @@ import unittest
 from click.testing import CliRunner
 
 from nl_open_data import nl_open_data
-from nl_open_data import cli
+from nl_open_data import cli, __version__
+
+
+def test_version():
+    assert __version__ == '0.1.0'
 
 
 class TestNl_open_data(unittest.TestCase):

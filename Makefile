@@ -87,6 +87,11 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
+poetry: ## generate setup.py, environment.yml and requirements.txt from poetry
+	dephell deps convert
+	dephell deps convert --env requirements
+	dephell deps convert --env conda
+
 bq-datasets:
 	bq --location=EU mk -d --description "Data from CBS Statline" cbs
 	bq --location=EU mk -d --description "Data from Kadaster" kadaster

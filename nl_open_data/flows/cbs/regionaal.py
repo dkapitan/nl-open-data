@@ -47,6 +47,8 @@ ODATA_REGIONAAL = [
     "84721NED",
     # Grote bevolkingstabel per pc4-leeftijd-geslacht vanaf 1999
     # "83502NED",
+    # inkomensverdeling
+    # "84639NED"
 ]
 
 ODATA_RIVM = "50052NED"  # https://statline.rivm.nl/portal.html?_la=nl&_catalog=RIVM&tableId=50052NED&_theme=72
@@ -95,32 +97,11 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
     return jobs
 
 
-@task(name="CBS ODATA Tables")
-def odatav3_catalog_to_gbq(schema="cbs", credentials=None, GCP=None):
-    """Loads odatav3 catalog of all tables.
-
-    """
-    bq = bigquery.Client(credentials=credentials, project=GCP.project)
-    job_config = bigquery.LoadJobConfig()
-    job_config.write_disposition = "WRITE_TRUNCATE"
-    tables = pd.DataFrame(requests.get(URL_TABLES).json()["value"])
-    job = bq.load_table_from_dataframe(
-        dataframe=tables,
-        destination="cbs.tables_v3",
-        credentials=credentials,
-        project=GCP.project,
-        location=GCP.location,
-    )
-    return job
-
-
 gcp = Parameter("gcp", required=True)
 filepath = Parameter("filepath", required=True)
 curl_download = ShellTask(name="curl_download")
 regionaal = task(cbsodatav3_to_gbq, name="regionaal", skip_on_upstream_skip=False)
 rivm = task(cbsodatav3_to_gbq, name="rivm")
-
-
 
 with Flow("CBS regionaal") as flow:
     # TODO: fix UnicodeDecodeError when writing to Google Drive

@@ -5,15 +5,19 @@ from bunch import Bunch
 import google.auth
 import pandas as pd
 import pandas_gbq
-from prefect import task, Flow
+from prefect import task, Parameter, Flow
+from prefect.engine.executors import DaskExecutor
 
-import config
+from nl_open_data.config import get_config
 
+config = get_config("dataverbinders")
+AGB_FOLDER = config.path.root / config.path.agb
 
-AGB_FOLDER = Path(
-    "/Volumes/GoogleDrive/My Drive/@kapitan/open-data/vektis-agb/FAGBX_All_P!Q0"
-)
+# Path(
+#     "/Volumes/GoogleDrive/My Drive/@kapitan/open-data/vektis-agb/FAGBX_All_P!Q0"
+# )
 
+# TODO replace Bunch object
 AGB = Bunch(
     zorgverlener=Bunch(
         file=AGB_FOLDER / "FAGBX_20_All_AB-en.csv",
@@ -159,17 +163,24 @@ def load_agb(dfs, credentials=None, GCP=None):
             location=GCP.location,
         )
 
+gcp = Parameter("gcp", required=True)
+filepath = Parameter("filepath", required=True)
+
+with Flow("Vektis AGB") as flow:
+    e = parse_agb()
+    l = load_agb(e, GCP=gcp)
+
+
+def main(config=config):
+    """Executes vektis.agb.flow in DaskExecutor.
+    """
+    executor = DaskExecutor(n_workers=8)
+    flow.run(
+        executor=executor,
+        parameters={"gcp": config.gcp},
+    )
+    
 
 if __name__ == "__main__":
-    # geocode addressen praktijk - need to do this in batches
-    # adres_praktijk_xy = pd.DataFrame.from_records(
-    #     dfs.adres_praktijk.loc[:, ["postcode", "huisnummer"]].apply(
-    #         lambda row: get_RDXY(row.postcode, row.huisnummer), axis=1
-    #     )
-    # )
-    with Flow("AGB") as flow:
-        credentials, _ = google.auth.default()
-        e = parse_agb()
-        l = load_agb(e, credentials=credentials, GCP=config.GCP_DK)
+    main(config=config)
 
-    flow.run()
