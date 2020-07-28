@@ -5,6 +5,7 @@ import zipfile
 
 import prefect
 from prefect import task, Parameter, Flow
+from prefect.tasks.shell import ShellTask
 from prefect.engine.result_handlers import LocalResultHandler
 from prefect.tasks.secrets import PrefectSecret
 from prefect.tasks.gcp.bigquery import BigQueryLoadFile
@@ -12,8 +13,8 @@ from prefect. utilities.configuration import set_temporary_config
 from lxml import etree, objectify
 import xmltodict
 
-from config import get_config
-from tasks import curl_cmd, download, unzip, create_dir
+from nl_open_data.config import get_config
+from nimbletl.tasks import curl_cmd, unzip, create_dir
 
 
 # TO DO: encapsulate config into initalization task so this can be provided at runtime
@@ -93,11 +94,12 @@ load_file = BigQueryLoadFile(
     location=CONFIG.gcp.location,
 )
 
+curl_download = ShellTask(name="curl_download")
 
 with Flow("BAG NUM") as flow:
     # credentials, _ = google.auth.default()
     # command = curl_cmd(BAG_URL, BAG_FILE)
-    # curl = download(command=command)
+    # curl = curl_download(command=command)
 
     # need to add switch: if zipfile exist, skip
     # extract = unzip(zipfile=BAG_FILE, upstream_tasks=[curl])

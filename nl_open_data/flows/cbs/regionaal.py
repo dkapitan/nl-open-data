@@ -100,16 +100,16 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
 gcp = Parameter("gcp", required=True)
 filepath = Parameter("filepath", required=True)
 curl_download = ShellTask(name="curl_download")
-regionaal = task(cbsodatav3_to_gbq, name="regionaal", skip_on_upstream_skip=False)
-rivm = task(cbsodatav3_to_gbq, name="rivm")
+# regionaal = cbsodatav3_to_gbq(name="regionaal", skip_on_upstream_skip=False)
+# rivm = cbsodatav3_to_gbq(name="rivm")
 
 with Flow("CBS regionaal") as flow:
-    # TODO: fix UnicodeDecodeError when writing to Google Drive
-    curl_command = curl_cmd(URL_PC6HUISNR, filepath)
-    curl_download = curl_download(command=curl_command)
-    gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
-    regionaal = regionaal.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp))
-    rivm = rivm(id=ODATA_RIVM, schema="rivm", third_party=True, GCP=gcp)
+    # # TODO: fix UnicodeDecodeError when writing to Google Drive
+    # curl_command = curl_cmd(URL_PC6HUISNR, filepath)
+    # curl_download = curl_download(command=curl_command)
+    # gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
+    # regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp))
+    rivm = cbsodatav3_to_gbq(id=ODATA_RIVM, schema="rivm", third_party=True, GCP=gcp)
 
 
 def main(config):
