@@ -1,19 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nl_open_data package &#8212; nl-open-data 0.1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="nl_open_data.flows package" href="nl_open_data.flows.html" />
@@ -50,13 +49,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="nl_open_data.flows.kadaster.html">nl_open_data.flows.kadaster package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.kadaster.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.kadaster.html#nl-open-data-flows-kadaster-bag-module">nl_open_data.flows.kadaster.bag module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.kadaster.html#module-nl_open_data.flows.kadaster.bag">nl_open_data.flows.kadaster.bag module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.kadaster.html#module-nl_open_data.flows.kadaster">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="nl_open_data.flows.vektis.html">nl_open_data.flows.vektis package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.vektis.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.vektis.html#nl-open-data-flows-vektis-agb-module">nl_open_data.flows.vektis.agb module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.vektis.html#module-nl_open_data.flows.vektis.agb">nl_open_data.flows.vektis.agb module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.vektis.html#module-nl_open_data.flows.vektis.open_data">nl_open_data.flows.vektis.open_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="nl_open_data.flows.vektis.html#module-nl_open_data.flows.vektis">Module contents</a></li>
 </ul>
@@ -78,103 +77,109 @@
 </div>
 <div class="section" id="module-nl_open_data.config">
 <span id="nl-open-data-config-module"></span><h2>nl_open_data.config module<a class="headerlink" href="#module-nl_open_data.config" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
+<dl class="py class">
 <dt id="nl_open_data.config.Config">
-<em class="property">class </em><code class="descclassname">nl_open_data.config.</code><code class="descname">Config</code><span class="sig-paren">(</span><em>gcp: nl_open_data.config.GCP = None</em>, <em>path: nl_open_data.config.Paths = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.Config" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">nl_open_data.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gcp</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#nl_open_data.config.GCP" title="nl_open_data.config.GCP">nl_open_data.config.GCP</a></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#nl_open_data.config.Paths" title="nl_open_data.config.Paths">nl_open_data.config.Paths</a></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Config.gcp">
-<code class="descname">gcp</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Config.gcp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">gcp</code><em class="property">: <a class="reference internal" href="#nl_open_data.config.GCP" title="nl_open_data.config.GCP">nl_open_data.config.GCP</a></em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Config.gcp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Config.path">
-<code class="descname">path</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Config.path" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">path</code><em class="property">: <a class="reference internal" href="#nl_open_data.config.Paths" title="nl_open_data.config.Paths">nl_open_data.config.Paths</a></em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Config.path" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="nl_open_data.config.GCP">
-<em class="property">class </em><code class="descclassname">nl_open_data.config.</code><code class="descname">GCP</code><span class="sig-paren">(</span><em>credentials_file: pathlib.Path = &lt;factory&gt;</em>, <em>credentials_info: dict = None</em>, <em>project: str = None</em>, <em>bucket: str = None</em>, <em>location: str = 'EU'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#GCP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.GCP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">nl_open_data.config.</code><code class="sig-name descname">GCP</code><span class="sig-paren">(</span><em class="sig-param">credentials_file: pathlib.Path = &lt;factory&gt;</em>, <em class="sig-param">credentials_info: dict = None</em>, <em class="sig-param">project: str = None</em>, <em class="sig-param">bucket: str = None</em>, <em class="sig-param">location: str = 'EU'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#GCP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.GCP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.GCP.bucket">
-<code class="descname">bucket</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.GCP.bucket" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">bucket</code><em class="property">: str</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.GCP.bucket" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
+<dt id="nl_open_data.config.GCP.credentials_file">
+<code class="sig-name descname">credentials_file</code><em class="property">: Path</em><a class="headerlink" href="#nl_open_data.config.GCP.credentials_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt id="nl_open_data.config.GCP.credentials_info">
-<code class="descname">credentials_info</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.GCP.credentials_info" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">credentials_info</code><em class="property">: dict</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.GCP.credentials_info" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.GCP.location">
-<code class="descname">location</code><em class="property"> = 'EU'</em><a class="headerlink" href="#nl_open_data.config.GCP.location" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">location</code><em class="property">: str</em><em class="property"> = 'EU'</em><a class="headerlink" href="#nl_open_data.config.GCP.location" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.GCP.project">
-<code class="descname">project</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.GCP.project" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">project</code><em class="property">: str</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.GCP.project" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="nl_open_data.config.Paths">
-<em class="property">class </em><code class="descclassname">nl_open_data.config.</code><code class="descname">Paths</code><span class="sig-paren">(</span><em>root: pathlib.Path = None</em>, <em>agb: pathlib.Path = None</em>, <em>vektis_open_data: pathlib.Path = None</em>, <em>cbs: pathlib.Path = None</em>, <em>bag: pathlib.Path = None</em>, <em>tmp: pathlib.Path = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#Paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.Paths" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">nl_open_data.config.</code><code class="sig-name descname">Paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root</span><span class="p">:</span> <span class="n">pathlib.Path</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">agb</span><span class="p">:</span> <span class="n">pathlib.Path</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">vektis_open_data</span><span class="p">:</span> <span class="n">pathlib.Path</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cbs</span><span class="p">:</span> <span class="n">pathlib.Path</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bag</span><span class="p">:</span> <span class="n">pathlib.Path</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tmp</span><span class="p">:</span> <span class="n">pathlib.Path</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#Paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.Paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Data paths defined relative to root</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Paths.agb">
-<code class="descname">agb</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.agb" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">agb</code><em class="property">: pathlib.Path</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.agb" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Paths.bag">
-<code class="descname">bag</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.bag" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">bag</code><em class="property">: pathlib.Path</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.bag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Paths.cbs">
-<code class="descname">cbs</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.cbs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">cbs</code><em class="property">: pathlib.Path</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.cbs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Paths.root">
-<code class="descname">root</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.root" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">root</code><em class="property">: pathlib.Path</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.root" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Paths.tmp">
-<code class="descname">tmp</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.tmp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">tmp</code><em class="property">: pathlib.Path</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.tmp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="nl_open_data.config.Paths.vektis_open_data">
-<code class="descname">vektis_open_data</code><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.vektis_open_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">vektis_open_data</code><em class="property">: pathlib.Path</em><em class="property"> = None</em><a class="headerlink" href="#nl_open_data.config.Paths.vektis_open_data" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="nl_open_data.config.get_config">
-<code class="descclassname">nl_open_data.config.</code><code class="descname">get_config</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#get_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.get_config" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">nl_open_data.config.</code><code class="sig-name descname">get_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#get_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.get_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get configuration.</p>
 <p>config should be one of configs.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="nl_open_data.config.get_gcloud_adc">
-<code class="descclassname">nl_open_data.config.</code><code class="descname">get_gcloud_adc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#get_gcloud_adc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.get_gcloud_adc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">nl_open_data.config.</code><code class="sig-name descname">get_gcloud_adc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/config.html#get_gcloud_adc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.config.get_gcloud_adc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets gcloud application default credentials.</p>
 <p>There are two recommended ways to authenticate on GCP:
 - Use <cite>gcloud auth application-default login</cite>,</p>
 <blockquote>
-<div>see <a class="reference external" href="https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login">https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login</a></div></blockquote>
+<div><p>see <a class="reference external" href="https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login">https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login</a></p>
+</div></blockquote>
 <ul class="simple">
-<li>Use service accounts and setting <cite>GOOGLE_APPLICATION_CREDENTIALS</cite>,
-see <a class="reference external" href="https://cloud.google.com/docs/authentication/production">https://cloud.google.com/docs/authentication/production</a></li>
+<li><p>Use service accounts and setting <cite>GOOGLE_APPLICATION_CREDENTIALS</cite>,
+see <a class="reference external" href="https://cloud.google.com/docs/authentication/production">https://cloud.google.com/docs/authentication/production</a></p></li>
 </ul>
 <p>Note prefect uses <a href="#id1"><span class="problematic" id="id2">`</span></a>google.oauth2.service_account.Credentials.from_service_account_info()
 for initialising clients. 
@@ -184,15 +189,11 @@ See <a class="reference external" href="https://google-auth.readthedocs.io/en/la
 </div>
 <div class="section" id="module-nl_open_data.main">
 <span id="nl-open-data-main-module"></span><h2>nl_open_data.main module<a class="headerlink" href="#module-nl_open_data.main" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="nl_open_data.main.main">
-<code class="descclassname">nl_open_data.main.</code><code class="descname">main</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/main.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.main.main" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">nl_open_data.main.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/main.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.main.main" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</div>
-<div class="section" id="module-nl_open_data.nl_open_data">
-<span id="nl-open-data-nl-open-data-module"></span><h2>nl_open_data.nl_open_data module<a class="headerlink" href="#module-nl_open_data.nl_open_data" title="Permalink to this headline">¶</a></h2>
-<p>Main module.</p>
 </div>
 <div class="section" id="module-nl_open_data">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-nl_open_data" title="Permalink to this headline">¶</a></h2>
@@ -204,8 +205,8 @@ See <a class="reference external" href="https://google-auth.readthedocs.io/en/la
 <a class="reference external image-reference" href="https://dkapitan.github.io/nl-open-data"><img alt="Documentation Status" src="https://readthedocs.org/projects/nl-open-data/badge/?version=latest" /></a>
 <p>Datawarehouse of various Dutch open data sources with focus on healthcare and public domain.</p>
 <ul class="simple">
-<li>Free software: MIT license</li>
-<li>Documentation: <a class="reference external" href="https://dkapitan.github.io/nl-open-data">https://dkapitan.github.io/nl-open-data</a></li>
+<li><p>Free software: MIT license</p></li>
+<li><p>Documentation: <a class="reference external" href="https://dkapitan.github.io/nl-open-data">https://dkapitan.github.io/nl-open-data</a></p></li>
 </ul>
 <div class="section" id="installation">
 <h4>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h4>
@@ -265,17 +266,15 @@ See <a class="reference external" href="https://google-auth.readthedocs.io/en/la
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -292,7 +291,7 @@ See <a class="reference external" href="https://google-auth.readthedocs.io/en/la
       &copy;2020, Daniel Kapitan.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

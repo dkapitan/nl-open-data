@@ -1,19 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nl_open_data.flows.cbs package &#8212; nl-open-data 0.1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="nl_open_data.flows.kadaster package" href="nl_open_data.flows.kadaster.html" />
@@ -42,28 +41,27 @@
 <div class="section" id="module-nl_open_data.flows.cbs.regionaal">
 <span id="nl-open-data-flows-cbs-regionaal-module"></span><h2>nl_open_data.flows.cbs.regionaal module<a class="headerlink" href="#module-nl_open_data.flows.cbs.regionaal" title="Permalink to this headline">¶</a></h2>
 <p>Dataflow for regionaal data from Statistics Netherlands (Centraal Bureau voor Statistiek, CBS).</p>
-<dl class="docutils">
-<dt>Loads the following CBS datasets into BigQuery:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>Mapping of all postal code + housenumber to neighbourhood, district and municipalities,</dt>
-<dd>see <a class="reference external" href="https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer,wijkandgemeente">Buurt, wijk en gemeente voor postcode-huisnummer (2019)</a></dd>
+<dl class="simple">
+<dt>Loads the following CBS datasets into BigQuery:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>Mapping of all postal code + housenumber to neighbourhood, district and municipalities,</dt><dd><p>see <a class="reference external" href="https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer,wijkandgemeente">Buurt, wijk en gemeente voor postcode-huisnummer (2019)</a></p>
+</dd>
 </dl>
 </li>
-<li><a class="reference external" href="https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019">Kerncijfers wijken en buurten</a></li>
-<li><a class="reference external" href="https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232">Regionale indelingen</a></li>
-<li><dl class="first docutils">
-<dt><a class="reference external" href="https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230">Regionale kerncijfers uit ruim 50 CBS-statistieken.</a> </dt>
-<dd>Uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.</dd>
+<li><p><a class="reference external" href="https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019">Kerncijfers wijken en buurten</a></p></li>
+<li><p><a class="reference external" href="https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232">Regionale indelingen</a></p></li>
+<li><dl class="simple">
+<dt><a class="reference external" href="https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230">Regionale kerncijfers uit ruim 50 CBS-statistieken.</a> </dt><dd><p>Uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.</p>
+</dd>
 </dl>
 </li>
-<li><a class="reference external" href="https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137">Gezondheid per wijk en buurt 2016</a></li>
+<li><p><a class="reference external" href="https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137">Gezondheid per wijk en buurt 2016</a></p></li>
 </ul>
 </dd>
 </dl>
-<dl class="function">
+<dl class="py function">
 <dt id="nl_open_data.flows.cbs.regionaal.main">
-<code class="descclassname">nl_open_data.flows.cbs.regionaal.</code><code class="descname">main</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/flows/cbs/regionaal.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.flows.cbs.regionaal.main" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">nl_open_data.flows.cbs.regionaal.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nl_open_data/flows/cbs/regionaal.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nl_open_data.flows.cbs.regionaal.main" title="Permalink to this definition">¶</a></dt>
 <dd><p>Executes cbs.regionaal.flow in DaskExecutor.</p>
 </dd></dl>
 
@@ -120,17 +118,15 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -147,7 +143,7 @@
       &copy;2020, Daniel Kapitan.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

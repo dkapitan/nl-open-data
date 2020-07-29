@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nl_open_data.flows.vektis.agb &#8212; nl-open-data 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for nl_open_data.flows.vektis.agb</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># TODO: use dataclass</span>
+<span class="kn">from</span> <span class="nn">bunch</span> <span class="kn">import</span> <span class="n">Bunch</span>
+<span class="kn">import</span> <span class="nn">google.auth</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pandas_gbq</span>
+<span class="kn">from</span> <span class="nn">prefect</span> <span class="kn">import</span> <span class="n">task</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">Flow</span>
+<span class="kn">from</span> <span class="nn">prefect.engine.executors</span> <span class="kn">import</span> <span class="n">DaskExecutor</span>
+
+<span class="kn">from</span> <span class="nn">nl_open_data.config</span> <span class="kn">import</span> <span class="n">get_config</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;dataverbinders&quot;</span><span class="p">)</span>
+<span class="n">AGB_FOLDER</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">agb</span>
+
+<span class="c1"># Path(</span>
+<span class="c1">#     &quot;/Volumes/GoogleDrive/My Drive/@kapitan/open-data/vektis-agb/FAGBX_All_P!Q0&quot;</span>
+<span class="c1"># )</span>
+
+<span class="c1"># TODO replace Bunch object</span>
+<span class="n">AGB</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">(</span>
+    <span class="n">zorgverlener</span><span class="o">=</span><span class="n">Bunch</span><span class="p">(</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">AGB_FOLDER</span> <span class="o">/</span> <span class="s2">&quot;FAGBX_20_All_AB-en.csv&quot;</span><span class="p">,</span>
+        <span class="n">cols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;aanduiding_oud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bestandcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenersoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenernummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;naam&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;voorletters&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;voorvoegsels&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;adelijke_titel&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;academische_titel&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;straat&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;huisnummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;huisnummer_toev&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;postcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;plaatsnaam&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;telefoonnummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;geboortedatum&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;geslacht&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_aanvang_beroep&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_einde_beroep&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;verbijzondering_zvlsrt&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reserve&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">97</span><span class="p">],</span>
+        <span class="n">date_cols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;geboortedatum&quot;</span><span class="p">,</span> <span class="s2">&quot;datum_aanvang_beroep&quot;</span><span class="p">,</span> <span class="s2">&quot;datum_einde_beroep&quot;</span><span class="p">,],</span>
+    <span class="p">),</span>
+    <span class="n">specialist</span><span class="o">=</span><span class="n">Bunch</span><span class="p">(</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">AGB_FOLDER</span> <span class="o">/</span> <span class="s2">&quot;FAGBX_21_All_AB-en.csv&quot;</span><span class="p">,</span>
+        <span class="n">cols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;aanduiding_oud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bestandcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenersoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenernummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;indicatie_hoogleraar&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reden_einde_beroep&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reserve&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">143</span><span class="p">],</span>
+    <span class="p">),</span>
+    <span class="n">zorgverlener_praktijk</span><span class="o">=</span><span class="n">Bunch</span><span class="p">(</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">AGB_FOLDER</span> <span class="o">/</span> <span class="s2">&quot;FAGBX_22_All_AB-en.csv&quot;</span><span class="p">,</span>
+        <span class="n">cols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;aanduiding_oud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bestandcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenersoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenernummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;praktijknummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_toetreding_praktijk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_uittreding_praktijk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;status_in_de_praktijk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;leeg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;praktijksoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reserve&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">220</span><span class="p">],</span>
+        <span class="n">date_cols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;datum_toetreding_praktijk&quot;</span><span class="p">,</span> <span class="s2">&quot;datum_uittreding_praktijk&quot;</span><span class="p">,],</span>
+    <span class="p">),</span>
+    <span class="n">praktijk</span><span class="o">=</span><span class="n">Bunch</span><span class="p">(</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">AGB_FOLDER</span> <span class="o">/</span> <span class="s2">&quot;FAGBX_23_All_AB-en.csv&quot;</span><span class="p">,</span>
+        <span class="n">cols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;aanduiding_oud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bestandcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenersoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;praktijknummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;naam&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;telefoonnummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_aanvang_praktijk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_einde_praktijk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filler&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;organisatievorm&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reserve&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">143</span><span class="p">,],</span>
+        <span class="n">date_cols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;datum_aanvang_praktijk&quot;</span><span class="p">,</span> <span class="s2">&quot;datum_einde_praktijk&quot;</span><span class="p">,],</span>
+    <span class="p">),</span>
+    <span class="n">zorgverlener_instelling</span><span class="o">=</span><span class="n">Bunch</span><span class="p">(</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">AGB_FOLDER</span> <span class="o">/</span> <span class="s2">&quot;FAGBX_24_All_AB-en.csv&quot;</span><span class="p">,</span>
+        <span class="n">cols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;aanduiding_oud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bestandcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenersoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenernummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;instellingsnummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_toetreding_instelling&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datum_uittreding_instelling&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;status_in_de_instelling&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reserve&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">221</span><span class="p">],</span>
+        <span class="n">date_cols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;datum_toetreding_instelling&quot;</span><span class="p">,</span> <span class="s2">&quot;datum_uittreding_instelling&quot;</span><span class="p">,],</span>
+    <span class="p">),</span>
+    <span class="n">adres_praktijk</span><span class="o">=</span><span class="n">Bunch</span><span class="p">(</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">AGB_FOLDER</span> <span class="o">/</span> <span class="s2">&quot;FAGBX_25_All_AB-en.csv&quot;</span><span class="p">,</span>
+        <span class="n">cols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;aanduiding_oud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bestandcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;zorgverlenersoort&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;praktijknummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;praktijkadres_volgnummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;straat&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;huisnummer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;huisnummer_toev&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;postcode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;plaatsnaam&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reserve&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">180</span><span class="p">],</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+
+<span class="nd">@task</span>
+<span class="k">def</span> <span class="nf">parse_agb</span><span class="p">():</span>
+    <span class="n">dfs</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">AGB</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">dfs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_fwf</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">widths</span><span class="p">)</span>
+        <span class="n">dfs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">cols</span>
+        <span class="k">if</span> <span class="s2">&quot;date_cols&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">date_col</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">date_cols</span><span class="p">:</span>
+                <span class="n">dfs</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">date_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span>
+                    <span class="n">dfs</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">date_col</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">fillchar</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">),</span>
+                    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">%m%Y&quot;</span><span class="p">,</span>
+                    <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">dfs</span>
+
+
+<span class="nd">@task</span>
+<span class="k">def</span> <span class="nf">load_agb</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load list of dataframes dfs into GBQ</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dfs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">pandas_gbq</span><span class="o">.</span><span class="n">to_gbq</span><span class="p">(</span>
+            <span class="n">v</span><span class="p">,</span>
+            <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;vektis&quot;</span><span class="p">,</span> <span class="n">k</span><span class="p">]),</span>
+            <span class="n">project_id</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">project</span><span class="p">,</span>
+            <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span>
+            <span class="n">if_exists</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+            <span class="n">location</span><span class="o">=</span><span class="n">GCP</span><span class="o">.</span><span class="n">location</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<span class="n">gcp</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gcp&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">filepath</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;filepath&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">Flow</span><span class="p">(</span><span class="s2">&quot;Vektis AGB&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">flow</span><span class="p">:</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">parse_agb</span><span class="p">()</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">load_agb</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">GCP</span><span class="o">=</span><span class="n">gcp</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../../nl_open_data.flows.vektis.html#nl_open_data.flows.vektis.agb.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Executes vektis.agb.flow in DaskExecutor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">DaskExecutor</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">flow</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">executor</span><span class="o">=</span><span class="n">executor</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;gcp&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">gcp</span><span class="p">},</span>
+    <span class="p">)</span></div>
+    
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">nl-open-data</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme.html">nl-open-data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">nl_open_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../history.html">History</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Daniel Kapitan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -23,14 +23,35 @@
 </header>
 <section id="section-intro">
 <p>Dataflow for regionaal data from Statistics Netherlands (Centraal Bureau voor Statistiek, CBS).</p>
-<p>Loads the following CBS datasets into BigQuery:
-- Mapping of all postal code + housenumber to neighbourhood, district and municipalities,
-see <code>Buurt, wijk en gemeente voor postcode-huisnummer (2019) &lt;https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer, wijk and gemeente&gt;</code><em>
-- <code>Kerncijfers wijken en buurten &lt;https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019&gt;</code></em>
-- <code>Regionale indelingen &lt;https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232&gt;</code><em>
-- <code>Regionale kerncijfers uit ruim 50 CBS-statistieken. &lt;https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230&gt;</code></em>
-Uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.
-- <code>Gezondheid per wijk en buurt 2016 &lt;https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137&gt;</code>_</p>
+<p>Loads the following CBS datasets into BigQuery:</p>
+<ul>
+<li>Mapping of all postal code + housenumber to neighbourhood, district and municipalities
+(Buurt, wijk en gemeente voor postcode-huisnummer (2019)<sup id="fnref:adres"><a class="footnote-ref" href="#fn:adres">1</a></sup>)</li>
+<li>Kerncijfers wijken en buurten<sup id="fnref:kwb"><a class="footnote-ref" href="#fn:kwb">2</a></sup> </li>
+<li>Regionale indelingen<sup id="fnref:regios"><a class="footnote-ref" href="#fn:regios">3</a></sup></li>
+<li>Regionale kerncijfers uit ruim 50 CBS-statistieken<sup id="fnref:core"><a class="footnote-ref" href="#fn:core">4</a></sup>, uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.</li>
+<li>Gezondheid per wijk en buurt 2016<sup id="fnref:rivm"><a class="footnote-ref" href="#fn:rivm">5</a></sup> </li>
+</ul>
+<div class="footnote">
+<hr>
+<ol>
+<li id="fn:adres">
+<p><a href="https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer">https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer</a>&#160;<a class="footnote-backref" href="#fnref:adres" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:kwb">
+<p><a href="https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019">https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019</a>&#160;<a class="footnote-backref" href="#fnref:kwb" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:regios">
+<p><a href="https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232">https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232</a>&#160;<a class="footnote-backref" href="#fnref:regios" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:core">
+<p><a href="https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230">https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230</a>&#160;<a class="footnote-backref" href="#fnref:core" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:rivm">
+<p><a href="https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137">https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137</a>&#160;<a class="footnote-backref" href="#fnref:rivm" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -38,14 +59,20 @@ Uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.
 <pre><code class="python">&#34;&#34;&#34;Dataflow for regionaal data from Statistics Netherlands (Centraal Bureau voor Statistiek, CBS).
 
 Loads the following CBS datasets into BigQuery:
-    - Mapping of all postal code + housenumber to neighbourhood, district and municipalities,
-        see `Buurt, wijk en gemeente voor postcode-huisnummer (2019) &lt;https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer, wijk and gemeente&gt;`_
-    - `Kerncijfers wijken en buurten &lt;https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019&gt;`_
-    - `Regionale indelingen &lt;https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232&gt;`_
-    - `Regionale kerncijfers uit ruim 50 CBS-statistieken. &lt;https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230&gt;`_ 
-        Uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.
-    - `Gezondheid per wijk en buurt 2016 &lt;https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137&gt;`_
+
+- Mapping of all postal code + housenumber to neighbourhood, district and municipalities
+    (Buurt, wijk en gemeente voor postcode-huisnummer (2019)[^adres])
+- Kerncijfers wijken en buurten[^kwb] 
+- Regionale indelingen[^regios]
+- Regionale kerncijfers uit ruim 50 CBS-statistieken[^core], uitgesplitst naar vier regionale niveaus van landsdeel tot gemeente.
+- Gezondheid per wijk en buurt 2016[^rivm] 
     
+[^adres]: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer
+[^kwb]: https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2019
+[^regios]: https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&amp;_la=nl&amp;tableId=84721NED&amp;_theme=232
+[^core]:  https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=70072ned&amp;_theme=230
+[^rivm]: https://statline.rivm.nl/#/RIVM/nl/dataset/50052NED/table?ts=1589622516137
+
 
 &#34;&#34;&#34;
 
@@ -59,7 +86,7 @@ import pandas as pd
 import prefect
 from prefect import task, Parameter, Flow
 from prefect.tasks.shell import ShellTask
-from prefect.utilities.tasks import unmapped
+from prefect.utilities.edges import unmapped
 from prefect.engine.executors import DaskExecutor
 
 from nimbletl.tasks import curl_cmd, cbsodatav3_to_gbq
@@ -73,13 +100,13 @@ URL_PC6HUISNR = (
 
 ODATA_REGIONAAL = [
     # Kerncijfers wijken en buurten
-    &#34;84583NED&#34;,  # 2019
-    &#34;84286NED&#34;,  # 2018
-    &#34;83765NED&#34;,  # 2017
-    &#34;83487NED&#34;,  # 2016
-    &#34;83220NED&#34;,  # 2015
-    &#34;82931NED&#34;,  # 2014
-    &#34;82339NED&#34;,  # 2013
+    # &#34;84583NED&#34;,  # 2019
+    # &#34;84286NED&#34;,  # 2018
+    # &#34;83765NED&#34;,  # 2017
+    # &#34;83487NED&#34;,  # 2016
+    # &#34;83220NED&#34;,  # 2015
+    # &#34;82931NED&#34;,  # 2014
+    # &#34;82339NED&#34;,  # 2013
     # Regionale indelingen
     &#34;84721NED&#34;,
     # Grote bevolkingstabel per pc4-leeftijd-geslacht vanaf 1999
@@ -89,7 +116,7 @@ ODATA_REGIONAAL = [
 ]
 
 ODATA_RIVM = &#34;50052NED&#34;  # https://statline.rivm.nl/portal.html?_la=nl&amp;_catalog=RIVM&amp;tableId=50052NED&amp;_theme=72
-
+ODATA_MLZ = [&#34;40061NED&#34;, &#34;40060NED&#34;]
 
 ODATA_BEVOLKING = &#34;03759ned&#34;  # https://opendata.cbs.nl/statline/portal.html?_la=nl&amp;_catalog=CBS&amp;tableId=03759ned&amp;_theme=259
 
@@ -97,7 +124,7 @@ ODATA_BEVOLKING = &#34;03759ned&#34;  # https://opendata.cbs.nl/statline/portal.
 @task(skip_on_upstream_skip=False)
 def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
     &#34;&#34;&#34;
-    Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.
+    Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.[^adres]
 
     Args:
         - zipfile (str): path to downloaded zipfile
@@ -107,7 +134,7 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
     Returns:
         List[google.cloud.bigquery.job.LoadJob]
 
-    Source: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer
+    [^adres]: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer
     &#34;&#34;&#34;
     with ZipFile(zipfile) as zipfile:
         data = {
@@ -137,25 +164,25 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
 gcp = Parameter(&#34;gcp&#34;, required=True)
 filepath = Parameter(&#34;filepath&#34;, required=True)
 curl_download = ShellTask(name=&#34;curl_download&#34;)
-# regionaal = cbsodatav3_to_gbq(name=&#34;regionaal&#34;, skip_on_upstream_skip=False)
-# rivm = cbsodatav3_to_gbq(name=&#34;rivm&#34;)
+
 
 with Flow(&#34;CBS regionaal&#34;) as flow:
     # # TODO: fix UnicodeDecodeError when writing to Google Drive
-    # curl_command = curl_cmd(URL_PC6HUISNR, filepath)
+    curl_command = curl_cmd(URL_PC6HUISNR, filepath)
     # curl_download = curl_download(command=curl_command)
     # gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
-    # regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp))
-    rivm = cbsodatav3_to_gbq(id=ODATA_RIVM, schema=&#34;rivm&#34;, third_party=True, GCP=gcp)
+    regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp), task_args={&#39;skip_on_upstream_skip&#39;: False})
+    # rivm = cbsodatav3_to_gbq(id=ODATA_RIVM, schema=&#34;rivm&#34;, third_party=True, GCP=gcp)
+    # mlz = cbsodatav3_to_gbq(id=ODATA_MLZ[1], schema=&#39;mlz&#39;, third_party=True, GCP=gcp, task_args={&#39;skip_on_upstream_skip&#39;: False})
 
 
 def main(config):
     &#34;&#34;&#34;Executes cbs.regionaal.flow in DaskExecutor.
     &#34;&#34;&#34;
 
-    executor = DaskExecutor(n_workers=8)
+    # executor = DaskExecutor(n_workers=8)
     flow.run(
-        executor=executor,
+        # executor=executor,
         parameters={
             &#34;gcp&#34;: config.gcp,
             &#34;filepath&#34;: config.path.root
@@ -190,9 +217,9 @@ if __name__ == &#34;__main__&#34;:
     &#34;&#34;&#34;Executes cbs.regionaal.flow in DaskExecutor.
     &#34;&#34;&#34;
 
-    executor = DaskExecutor(n_workers=8)
+    # executor = DaskExecutor(n_workers=8)
     flow.run(
-        executor=executor,
+        # executor=executor,
         parameters={
             &#34;gcp&#34;: config.gcp,
             &#34;filepath&#34;: config.path.root
@@ -206,7 +233,7 @@ if __name__ == &#34;__main__&#34;:
 <span>def <span class="ident">pc6huisnr_to_gbq</span></span>(<span>zipfile=None, credentials=None, GCP=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.</p>
+<div class="desc"><p>Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.<sup id="fnref:adres"><a class="footnote-ref" href="#fn:adres">1</a></sup></p>
 <h2 id="args">Args</h2>
 <ul>
 <li>zipfile (str): path to downloaded zipfile</li>
@@ -214,8 +241,15 @@ if __name__ == &#34;__main__&#34;:
 <li>GCP (GCP config dataclass)</li>
 </ul>
 <h2 id="returns">Returns</h2>
-<p>List[google.cloud.bigquery.job.LoadJob]
-Source: <a href="https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer">https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer</a></p></div>
+<p>List[google.cloud.bigquery.job.LoadJob]</p>
+<div class="footnote">
+<hr>
+<ol>
+<li id="fn:adres">
+<p><a href="https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer">https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer</a>&#160;<a class="footnote-backref" href="#fnref:adres" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -223,7 +257,7 @@ Source: <a href="https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeent
 <pre><code class="python">@task(skip_on_upstream_skip=False)
 def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
     &#34;&#34;&#34;
-    Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.
+    Loads CBS for mapping each address to buurt, wijk and gemeente from 2019.[^adres]
 
     Args:
         - zipfile (str): path to downloaded zipfile
@@ -233,7 +267,7 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
     Returns:
         List[google.cloud.bigquery.job.LoadJob]
 
-    Source: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer
+    [^adres]: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer
     &#34;&#34;&#34;
     with ZipFile(zipfile) as zipfile:
         data = {
