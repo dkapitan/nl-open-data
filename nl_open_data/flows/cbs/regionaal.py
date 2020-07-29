@@ -22,7 +22,7 @@ import pandas as pd
 import prefect
 from prefect import task, Parameter, Flow
 from prefect.tasks.shell import ShellTask
-from prefect.utilities.tasks import unmapped
+from prefect.utilities.edges import unmapped
 from prefect.engine.executors import DaskExecutor
 
 from nimbletl.tasks import curl_cmd, cbsodatav3_to_gbq
@@ -36,13 +36,13 @@ URL_PC6HUISNR = (
 
 ODATA_REGIONAAL = [
     # Kerncijfers wijken en buurten
-    "84583NED",  # 2019
-    "84286NED",  # 2018
-    "83765NED",  # 2017
-    "83487NED",  # 2016
-    "83220NED",  # 2015
-    "82931NED",  # 2014
-    "82339NED",  # 2013
+    # "84583NED",  # 2019
+    # "84286NED",  # 2018
+    # "83765NED",  # 2017
+    # "83487NED",  # 2016
+    # "83220NED",  # 2015
+    # "82931NED",  # 2014
+    # "82339NED",  # 2013
     # Regionale indelingen
     "84721NED",
     # Grote bevolkingstabel per pc4-leeftijd-geslacht vanaf 1999
@@ -52,7 +52,7 @@ ODATA_REGIONAAL = [
 ]
 
 ODATA_RIVM = "50052NED"  # https://statline.rivm.nl/portal.html?_la=nl&_catalog=RIVM&tableId=50052NED&_theme=72
-
+ODATA_MLZ = ["40061NED", "40060NED"]
 
 ODATA_BEVOLKING = "03759ned"  # https://opendata.cbs.nl/statline/portal.html?_la=nl&_catalog=CBS&tableId=03759ned&_theme=259
 
@@ -100,25 +100,25 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
 gcp = Parameter("gcp", required=True)
 filepath = Parameter("filepath", required=True)
 curl_download = ShellTask(name="curl_download")
-# regionaal = cbsodatav3_to_gbq(name="regionaal", skip_on_upstream_skip=False)
-# rivm = cbsodatav3_to_gbq(name="rivm")
+
 
 with Flow("CBS regionaal") as flow:
     # # TODO: fix UnicodeDecodeError when writing to Google Drive
-    # curl_command = curl_cmd(URL_PC6HUISNR, filepath)
+    curl_command = curl_cmd(URL_PC6HUISNR, filepath)
     # curl_download = curl_download(command=curl_command)
     # gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
-    # regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp))
-    rivm = cbsodatav3_to_gbq(id=ODATA_RIVM, schema="rivm", third_party=True, GCP=gcp)
+    regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp), task_args={'skip_on_upstream_skip': False})
+    # rivm = cbsodatav3_to_gbq(id=ODATA_RIVM, schema="rivm", third_party=True, GCP=gcp)
+    # mlz = cbsodatav3_to_gbq(id=ODATA_MLZ[1], schema='mlz', third_party=True, GCP=gcp, task_args={'skip_on_upstream_skip': False})
 
 
 def main(config):
     """Executes cbs.regionaal.flow in DaskExecutor.
     """
 
-    executor = DaskExecutor(n_workers=8)
+    # executor = DaskExecutor(n_workers=8)
     flow.run(
-        executor=executor,
+        # executor=executor,
         parameters={
             "gcp": config.gcp,
             "filepath": config.path.root

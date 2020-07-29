@@ -706,21 +706,6 @@ icu = ["PyICU (>=1.0.0)"]
 
 [[package]]
 category = "main"
-description = "Lightweight Python ETL toolkit using Prefect."
-name = "nimbletl"
-optional = false
-python-versions = ">=3.7"
-version = "0.1.0"
-
-[package.dependencies]
-prefect = ">=0.11.0"
-
-[package.source]
-reference = "50a188b67fcc5a87628bd191efa79c7f08543a19"
-type = "git"
-url = "https://github.com/dkapitan/nimbletl.git"
-[[package]]
-category = "main"
 description = "NumPy is the fundamental package for array computing with Python."
 name = "numpy"
 optional = false
@@ -1514,7 +1499,7 @@ version = "2.0.0"
 heapdict = "*"
 
 [metadata]
-content-hash = "af3e2e6f6ba1c867bdbc193137539eb82a85669ad9929c54d99ed3a239838dac"
+content-hash = "3a3a0e213f7c796e9ae6f0089fc2ba58808210ef154d0b295ed97bf81a830094"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1855,7 +1840,6 @@ natsort = [
     {file = "natsort-7.0.1-py3-none-any.whl", hash = "sha256:d3fd728a3ceb7c78a59aa8539692a75e37cbfd9b261d4d702e8016639820f90a"},
     {file = "natsort-7.0.1.tar.gz", hash = "sha256:a633464dc3a22b305df0f27abcb3e83515898aa1fd0ed2f9726c3571a27258cf"},
 ]
-nimbletl = []
 numpy = [
     {file = "numpy-1.19.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:b1cca51512299841bf69add3b75361779962f9cee7d9ee3bb446d5982e925b69"},
     {file = "numpy-1.19.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:c9591886fc9cbe5532d5df85cb8e0cc3b44ba8ce4367bd4cf1b93dc19713da72"},
