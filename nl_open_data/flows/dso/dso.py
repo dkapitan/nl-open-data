@@ -8,120 +8,38 @@ from prefect import task, Parameter, Flow
 from prefect.tasks.gcp import BigQueryTask
 from prefect.engine.results import LocalResult, PrefectResult
 
+from google.cloud.bigquery.table import Row
+import re
+
 from nl_open_data.config import get_config
 
-# Loading 'txe' configuration.
-CONFIG = get_config("txe")
 
-# GCP configurations
-GCP = CONFIG.gcp
-
-
-# Dict of column_name and alias.
-mlz_select_dict = {
-    "RegioS.Key":"gemeente_code",
-    "RegioS.Title":"gemeente_naam",
-    "Geslacht.Title":"geslacht",
-    "Leeftijd.Title":"leeftijd",
-    "Huishouden.Key":"huishouden_code",
-    "Type.Title":"huishouden_omschrijving",
-    "LeveringsvormZorg.Title":"leveringsvorm",
-    "fct.PersonenMetGebruikInJaar_1":"gebruik_aantal_personen",
-    "fct.PersonenMetGebruikInJaar_2":"gebruik_percentage"
-}
-
-
-# Dict of column_name and alias.
-mlz_joins_dict = {
-    "Perioden":"Perioden",
-    "Geslacht":"Geslacht",
-    "Leeftijd":"Leeftijd",
-    "Huishouden":"Huishouden",
-    "TypeMaatwerkvoorziening":"Type",
-    "LeveringsvormZorg":"LeveringsvormZorg",
-    "RegioS":"RegioS"
-}
-
-
-# List of Conditions
-mlz_cond_list = (
-    "fct.Perioden Like '%JJ%'",
-    "fct.Geslacht != 'GM%'",
-    "fct.Leeftijd NOT IN ('20300', '90120', '90200')",
-    "fct.Huishouden != 'T001139'",
-    "fct.TypeMaatwerkvoorziening != 'T001024'",
-    "fct.LeveringsvormZorg != 'T001306'"
-)
-
-
-# Dict of column_name and alias.
-cbs_select_dict = {
-    "regio.Key":"gemeente_code",
-    "regio.Title":"gemeente_naam",
-    "kvh.Key":"huishuiden_code",
-    "SUBSTR(kvh.Title, 7)":"huishouden_omschrijving",
-    "fct.ParticuliereHuishoudens_1":"particuliere_huishoudens_aantal",
-    "fct.ParticuliereHuishoudensRelatief_2":"particuliere_huishoudens_relatief",
-    "fct.GemiddeldGestandaardiseerdInkomen_3":"inkomen_gestandaardiseerd_gemiddeld",
-    "fct.MediaanGestandaardiseerdInkomen_4":"inkomen_gestandaardiseerd_mediaan",
-    "fct.GemiddeldBesteedbaarInkomen_5":"inkomen_besteedbaar_gemiddeld",
-    "fct.MediaanBesteedbaarInkomen_6":"inkomen_besteedbaar_mediaan",
-    "fct.GestandaardiseerdInkomen1e10Groep_7":"inkomensgroep_deciel_1",
-    "fct.GestandaardiseerdInkomen2e10Groep_8":"inkomensgroep_deciel_2",
-    "fct.GestandaardiseerdInkomen3e10Groep_9":"inkomensgroep_deciel_3",
-    "fct.GestandaardiseerdInkomen4e10Groep_10":"inkomensgroep_deciel_4",
-    "fct.GestandaardiseerdInkomen5e10Groep_11":"inkomensgroep_deciel_5",
-    "fct.GestandaardiseerdInkomen6e10Groep_12":"inkomensgroep_deciel_6",
-    "fct.GestandaardiseerdInkomen7e10Groep_13":"inkomensgroep_deciel_7",
-    "fct.GestandaardiseerdInkomen8e10Groep_14":"inkomensgroep_deciel_8",
-    "fct.GestandaardiseerdInkomen9e10Groep_15":"inkomensgroep_deciel_9",
-    "fct.GestandaardiseerdInkomen10e10Groep_16":"inkomensgroep_deciel_10"
-}
-
-
-# Dict of table_name and alias.
-cbs_joins_dict = {
-    "Regio":"regio",
-    "Populatie":"pop",
-    "KenmerkenVanHuishoudens":"kvh"
-}
-
-
-# List of Conditions
-cbs_cond_list = (
-    "fct.Perioden LIKE '%JJ%'",
-    "fct.Regio LIKE 'GM%'",
-    "fct.Populatie = '1050010'",
-    "kvh.Title LIKE 'Type:%'",
-    "fct.KenmerkenVanHuishoudens != '1050055'",
-)
-
-
-# TODO: Find a workaround to returm GCP.project and GCP.location based on Prefect parameters.
-# @task(result=PrefectResult())
-# def bq_project(var):
-#     return var
-
-
-# @task(result=PrefectResult())
-# def bq_location(var):
-#     return var
-
-
-def qry_select_string(select_tables):
+def qry_select_string(query_result):
     """Create select query as String.
 
     Args:
-        - select_tables (dict): Dictionary of the columns (key) and aliases (values) which need to be selected.
+        - query_result (list): List with result of the query.
     
     Returns:
         - String of the SELECT Query.
     """
-    qry_select = ("SELECT "\
-    "CAST(substr(fct.Perioden, 1, 4) AS INT64) AS jaar")
 
-    for table, alias in select_tables.items():
-        qry_select += (f", {table} AS {alias}")
+    # define search string
+    reg1 = re.compile("(RegioS?)|(Huishouden)")
+
+
+    qry_select = f"""SELECT
+    CAST(substr(fct.Perioden, 1, 4) AS INT64) AS jaar
+    """
+
+    for i in query_result:
+        if reg1.match(i.get('key')):
+            qry_select += f""", {i.get('key')}.Key
+    , {i.get('key')}.Title
+    """
+        else:
+            qry_select += f""", {i.get('key')}
+    """
     
     return qry_select
 
@@ -189,61 +107,72 @@ def test_query(GCP, new_table, selected_table, schema="cbs"):
 
 
 @task
-def query_generator(GCP, from_schema, new_table, selected_tables, dict_select, dict_join, list_cond, output_schema="dso"):
-    """Create complete SQL query which could be used for BigQueryTask.
-
-    Args:
-        - GCP (dataclass): configuration object with `project` and `location` attributes
-        - from_schema (str): Schema from which the tables are selected.
-        - new_table (str): Name of the new table.
-        - selected_tables (str): The primary table from which columns are selected for the query.
-        - dict_select (dict): Names and aliases of the columns which are selected for the query.
-        - dict_join (dict): Column names and aliases needed for the join statements.
-        - list_cond (list): The conditions for the query.
-        - output_schema: Name of the schema to which the new table will loaded.
-    
-    Returns:
-        - Complete query statement.
+def get_table_names(GCP, from_schema, table, output_schema="dso"):
+    qry_data_properties = f"""SELECT
+    type
+    , key
+    , title
+    FROM `dataverbinders.{from_schema}.{table}`
+    WHERE type like '%Dimension'
     """
 
-    create_statement = (f"CREATE OR REPLACE TABLE `{GCP.project}.{output_schema}.{new_table}` "\
-    "PARTITION BY RANGE_BUCKET(jaar, GENERATE_ARRAY(2011, 2020, 1)) AS (")
-    
-    select_statement = qry_select_string(dict_select)
-    
-    from_statement = qry_join_string(dict_join, GCP.project, from_schema, selected_tables)
+    # print(qry_data_properties)
 
-    where_statement = qry_where_string(list_cond)
+    bq_task = BigQueryTask(query=qry_data_properties, name="bq_task_query", project=GCP.project, location=GCP.location)
+    qry_result = bq_task.run()
     
-    qry = create_statement + select_statement + from_statement + where_statement
-    
-    print(qry)
+    print(type(qry_result))
+    print(type(qry_result[0]))
 
-    return qry
+    return qry_result
+
+
+@task
+def query_generator(GCP, query_result, schema="mlz"):
+    table = "40060NED_DataProperties"
+
+    pre_table = table.split("_")[0]
+
+    test_list = [Row(('Dimension', 'Geslacht', 'Geslacht'), {'type': 0, 'key': 1, 'title': 2}),
+    Row(('Dimension', 'Leeftijd', 'Leeftijd'), {'type': 0, 'key': 1, 'title': 2}),
+    Row(('Dimension', 'Huishouden', 'Huishouden'), {'type': 0, 'key': 1, 'title': 2}),
+    Row(('Dimension', 'TypeMaatwerkvoorziening', 'Type maatwerkvoorziening'), {'type': 0, 'key': 1, 'title': 2}),
+    Row(('Dimension', 'LeveringsvormZorg', 'Leveringsvorm zorg'), {'type': 0, 'key': 1, 'title': 2}),
+    Row(('GeoDimension', 'RegioS', "Regio's"), {'type': 0, 'key': 1, 'title': 2}),
+    Row(('TimeDimension', 'Perioden', 'Perioden'), {'type': 0, 'key': 1, 'title': 2})]
+
+    """ for i in test_list:
+        print("Key:", i.get('key'))
+        print("Title:", i.get('title')) """
+    
+    qry_select = qry_select_string(test_list)
+
+    qry_from = f"""FROM `dataverbinders.{schema}.{pre_table}_TypedDataSet` AS fct
+    """
+
+    qry_where = """WHERE"""
+
+    for i in test_list:
+        qry_from += f"""INNER JOIN `dataverbinders.{schema}.{pre_table}_{i.get('key')}` AS {i.get('key')} ON {i.get('key')}.key = fct.{i.get('key')}
+    """
+
+    test = qry_select + qry_from
+
+    print(test)
 
 
 with Flow("BigQuery Task Tester") as flow:
     # Defining Parameter gcp, to retrieve GCP-project and GCP-location
     gcp = Parameter("gcp", required=True)
-    # gcp_project = Parameter("project", required=True)
-    # gcp_location = Parameter("location", required=True)
-
-    # gcp_project = bq_project(var=project)
-    # gcp_location = bq_location(var=location)
 
     # Creating BigQueryTask which will execute a query in BigQuery, have to provide the paramters only once and can be re-used.
-    bq_task = BigQueryTask(name="bq_task_query", project=GCP.project, location=GCP.location)
-    # bq_task = BigQueryTask(name="bq_task_query", project=gcp_project, location=gcp_location)
+    # bq_task = BigQueryTask(name="bq_task_query", project=GCP.project, location=GCP.location)
 
-    # Creating the different queries as String.
-    # test_qry = test_query(GCP=gcp, new_table="pickle_rick", selected_table="82339NED_TypedDataSet")
-    # mlz_qry = query_generator(GCP=gcp, from_schema="mlz" new_table_name="pickle_rick", selected_tables="40060NED_TypedDataSet", dict_select=mlz_select_dict , dict_join=mlz_joins_dict, list_cond=mlz_cond_list)
-    cbs_qry = query_generator(GCP=gcp, from_schema="cbs", new_table="pickle_rick_2", selected_tables="84639NED_TypedDataSet", dict_select=cbs_select_dict , dict_join=cbs_joins_dict, list_cond=cbs_cond_list)
     
-    # Assigning the queries to the BigQueryTask Task.
-    # bq_test_query = bq_task(query=test_qry)
-    # bq_mlz_query = bq_task(query=mlz_qry)
-    bq_cbs_query = bq_task(query=cbs_qry)
+    # cbs_qry = get_table_names(GCP=gcp, from_schema="cbs", table="84639NED_DataProperties")
+    # mlz_qry = get_table_names(GCP=gcp, from_schema="mlz", table="40060NED_DataProperties")
+    
+    test = query_generator(GCP=gcp, query_result="test")
     
     
 
