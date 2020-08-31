@@ -26,10 +26,10 @@ from zipfile import ZipFile
 from google.cloud import bigquery
 import pandas as pd
 import prefect
-from prefect import task, Parameter, Flow
+from prefect import task, Parameter, Flow, unmapped
 from prefect.tasks.shell import ShellTask
-from prefect.utilities.edges import unmapped
 from prefect.engine.executors import DaskExecutor
+from prefect.triggers import all_successful
 
 from nimbletl.tasks import curl_cmd, cbsodatav3_to_gbq
 from nimbletl.utilities import clean_python_name
@@ -47,18 +47,15 @@ ODATA_REGIONAAL = [
     # "83765NED",  # 2017
     # "83487NED",  # 2016
     # "83220NED",  # 2015
-    # "82931NED",  # 2014
+    "82931NED",  # 2014
     # "82339NED",  # 2013
     # Regionale indelingen
-    "84721NED",
+    # "84721NED",
     # Grote bevolkingstabel per pc4-leeftijd-geslacht vanaf 1999
     # "83502NED",
     # inkomensverdeling
     # "84639NED"
 ]
-
-ODATA_RIVM = "50052NED"  # https://statline.rivm.nl/portal.html?_la=nl&_catalog=RIVM&tableId=50052NED&_theme=72
-ODATA_MLZ = ["40061NED", "40060NED"]
 
 ODATA_BEVOLKING = "03759ned"  # https://opendata.cbs.nl/statline/portal.html?_la=nl&_catalog=CBS&tableId=03759ned&_theme=259
 
@@ -114,13 +111,16 @@ with Flow("CBS regionaal") as flow:
     # curl_download = curl_download(command=curl_command)
     # gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
     regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp), task_args={'skip_on_upstream_skip': False})
-    # rivm = cbsodatav3_to_gbq(id=ODATA_RIVM, schema="rivm", third_party=True, GCP=gcp)
-    # mlz = cbsodatav3_to_gbq(id=ODATA_MLZ[1], schema='mlz', third_party=True, GCP=gcp, task_args={'skip_on_upstream_skip': False})
+    regionaal_column_description = column_descriptions.map(table_id=ODATA_REGIONAAL, GCP=unmapped(gcp), upstream_tasks=[regionaal])
 
 
 def main(config):
     """Executes cbs.regionaal.flow in DaskExecutor.
     """
+
+    """ Trigger in Prefect, load column description first and when finished only then load the data.
+    """
+    flow.set_reference_tasks([regionaal_column_description])
 
     # executor = DaskExecutor(n_workers=8)
     flow.run(
