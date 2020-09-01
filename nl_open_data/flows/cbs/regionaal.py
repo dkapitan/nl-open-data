@@ -47,14 +47,20 @@ ODATA_REGIONAAL = [
     # "83765NED",  # 2017
     # "83487NED",  # 2016
     # "83220NED",  # 2015
-    "82931NED",  # 2014
+    # "82931NED",  # 2014
     # "82339NED",  # 2013
     # Regionale indelingen
     # "84721NED",
     # Grote bevolkingstabel per pc4-leeftijd-geslacht vanaf 1999
     # "83502NED",
     # inkomensverdeling
-    # "84639NED"
+    # "84639NED",
+    # Gebruik Voorzieningen Sociaal Domein; Wijken
+    "83265NED",  # 2015
+    "83619NED",  # 2016
+    "83817NED",  # 2017
+    "84420NED",  # 2018
+    "84662NED"   # 2019
 ]
 
 ODATA_BEVOLKING = "03759ned"  # https://opendata.cbs.nl/statline/portal.html?_la=nl&_catalog=CBS&tableId=03759ned&_theme=259
