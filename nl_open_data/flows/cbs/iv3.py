@@ -22,26 +22,26 @@ from pathlib import Path
 import requests
 from zipfile import ZipFile
 
-
 from google.cloud import bigquery
+
 import pandas as pd
 import prefect
 from prefect import task, Parameter, Flow, unmapped
 from prefect.tasks.shell import ShellTask
 from prefect.engine.executors import DaskExecutor
-from prefect.triggers import all_successful
 from prefect.engine.state import Paused
+from prefect.engine.results import PrefectResult
+from prefect.triggers import all_successful
 
-from nimbletl.tasks import curl_cmd, cbsodatav3_to_gbq
+from nimbletl.tasks import curl_cmd, cbsodatav3_to_gbq#, cbsodatav3_to_gcs, gcs_to_bq
 from nimbletl.utilities import clean_python_name
 from nl_open_data.config import get_config
 
 
-
 ODATA_IV3 = [
     # Gemeenten onbewerkte IV3-Data
-    # "45050NED",  # 2020
-    # "45046NED",  # 2019
+    "45050NED",  # 2020
+    "45046NED",  # 2019
     # "45042NED",  # 2018
     # "45038NED",  # 2017
     # "45031NED",  # 2016
@@ -50,17 +50,19 @@ ODATA_IV3 = [
     # "45004NED",  # 2013
     # "45001NED",  # 2012
     # "45008NED",  # 2011
-    "45007NED"   # 2010
+    # "45007NED"   # 2010
 ]
 
+
 gcp = Parameter("gcp", required=True)
+dirs = Parameter("dirs", required=True)
 
 
-with Flow("CBS regionaal") as flow:
-    # # TODO: fix UnicodeDecodeError when writing to Google Drive
-    iv3 = cbsodatav3_to_gbq.map(id=ODATA_IV3, schema=unmapped("iv3"), third_party=unmapped(True), GCP=unmapped(gcp), task_args={'skip_on_upstream_skip': False})
-    iv3_column_description = column_descriptions.map(table_id=ODATA_IV3, third_party=unmapped(True), schema_bq=unmapped("iv3"), GCP=unmapped(gcp), upstream_tasks=[iv3])
-
+with Flow("Gemeente IV3 Data") as flow:
+    iv3_parquet = cbsodatav3_to_gcs.map(id=ODATA_IV3, schema=unmapped("iv3"), third_party=unmapped(True), GCP=unmapped(gcp), paths=unmapped(dirs), task_args={'skip_on_upstream_skip': False})
+    iv3_bq = gcs_to_bq.map(prefect_output=iv3_parquet, GCP=unmapped(gcp))
+    iv3_column_description = column_descriptions.map(table_id=ODATA_IV3, third_party=unmapped(True), schema_bq=unmapped("iv3"), GCP=unmapped(gcp), upstream_tasks=[iv3_bq])
+    
 
 def main(config):
     """Executes cbs.regionaal.flow in DaskExecutor.
@@ -75,11 +77,11 @@ def main(config):
         # executor=executor,
         parameters={
             "gcp": config.gcp,
+            "dirs": config.path,
         },
     )
 
 
 if __name__ == "__main__":
-    # config = get_config("dataverbinders")
-    config = get_config("txe")
+    config = get_config("dataverbinders")
     main(config=config)
