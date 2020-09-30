@@ -106,3 +106,5 @@ ENV/
 dask-worker-space/
 
 nl_open_data/flows/.DS_Store
+
+.DS_Store

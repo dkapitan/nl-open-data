@@ -91,7 +91,7 @@ def get_config(config):
             ),
         ),
         "txe": dict(
-            gcp=GCP(project="dataverbinders-dev", location="EU"),
+            gcp=GCP(project="dataverbinders-dev", bucket="dataverbinders", location="EU"),
             path=Paths(
                 root=Path.home() / "Documents/Werk/de_dataverbinders",
                 cbs=Path("test"),
