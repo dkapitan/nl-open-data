@@ -207,12 +207,12 @@ def main(GCP):
 
 # for local testing purposes
 if __name__ == "__main__":
-    config = get_config("dataverbinders")
+    config = get_config("ag")
     my_gcp = config.gcp
-    table_id = "83502NED"
-    schema = "cbs"
+    table_id = "40060NED"
+    schema = "mlz"
     main(my_gcp)
-    
+
     # data_properties = get_dimensions_from_bq(id=table_id, GCP=my_gcp, schema='mlz')
 
     # print(f"The dimensions for table {table_id}:")
