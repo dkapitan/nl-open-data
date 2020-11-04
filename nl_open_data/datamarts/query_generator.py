@@ -13,7 +13,7 @@ def get_dimensions_from_bq(id, schema="cbs", credentials=None, GCP=None):
     - GeoDimension
     - GeoDetail
 
-    For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl (Page 13)
+    For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl
     """
 
     # initialize client
@@ -30,6 +30,28 @@ def get_dimensions_from_bq(id, schema="cbs", credentials=None, GCP=None):
     return query_job
 
 
+def get_topics_from_bq(id, schema="cbs", credentials=None, GCP=None):
+    """Query dataset for its topics
+
+    For given dataset id, all its topics are queried.
+
+    For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl
+    """
+
+    # initialize client
+    bq = bigquery.Client(credentials=credentials, project=GCP.project)
+
+    # prepare sql query text
+    query = f"""
+    SELECT Key, Title, Type
+    FROM {GCP.project}.{schema}.{id}_DataProperties
+    WHERE Type LIKE '%Topic%'
+    """
+    # execute query
+    query_job = bq.query(query)
+    return query_job
+
+
 def write_select_dimensions(dims_dict):
     """Create a string for a SELECT part of an SQL query for dimension tables
 
@@ -40,6 +62,7 @@ def write_select_dimensions(dims_dict):
 
     For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl
     """
+
     string = ""
     for i, (key, title) in enumerate(dims_dict.items()):
         if i == 0:
@@ -55,6 +78,22 @@ def write_select_dimensions(dims_dict):
     return string
 
 
+def write_select_topics(topics_dict):
+    """Create a string for a SELECT part of an SQL query for a fact table
+
+    Given a dictionary key-value pairs, this function outputs a string to be
+    used as part of an SQL SELECT section. This is meant to be used when
+    flatenning a table, and the given dict should contain all Key-Title pairs
+    of the fact table to be used.
+
+    For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl
+    """
+
+    string = ""
+    for key, title in topics_dict.items():
+        string += f"\n    , fct.{key} AS {title.lower().replace(' ', '_').replace('(', '').replace(')', '').replace('%', 'per').replace(',', '')}"
+    return string
+
 def write_join_dimensions(dims_dict, join_type, id, schema, GCP):
     """Creates the join section of an sql query for dimension tables
 
@@ -65,6 +104,7 @@ def write_join_dimensions(dims_dict, join_type, id, schema, GCP):
 
     For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl
     """
+
     if join_type.upper() not in ["INNER", "LEFT", "RIGHT", "FULL"]:
         print('join_type must be one of: "INNER", "LEFT", "RIGHT", "FULL"')
         return None
@@ -101,6 +141,17 @@ def flatten_table(id, join_type="INNER", schema="cbs", credentials=None, GCP=Non
     geo_dims = {row['Key']: row['Title'] for row in dims_query if row['Type']=="GeoDimension"}
     geo_details = {row['Key']: row['Title'] for row in dims_query if row['Type']=="GeoDetail"}
 
+    # get topics info
+    topics_query = get_topics_from_bq(
+        id=id,
+        schema=schema,
+        credentials=credentials,
+        GCP=GCP
+    )
+
+    # place topics in a list
+    topics = {row['Key']: row['Title'] for row in topics_query}
+
     # CREATE statement
     create = f"CREATE OR REPLACE TABLE {GCP.project}.dso.{title}"
 
@@ -109,6 +160,7 @@ def flatten_table(id, join_type="INNER", schema="cbs", credentials=None, GCP=Non
 
     # SELECT statement
     select = "\n  SELECT" + write_select_dimensions(dims)
+    select += write_select_topics(topics)
 
     # FROM statement
     from_statement = f"\n  FROM {GCP.project}.{schema}.{id}_TypedDataSet AS fct"
@@ -155,10 +207,10 @@ def main(GCP):
 
 # for local testing purposes
 if __name__ == "__main__":
-    config = get_config("ag")
+    config = get_config("dataverbinders")
     my_gcp = config.gcp
-    table_id = "40060NED"
-    schema = "mlz"
+    table_id = "83502NED"
+    schema = "cbs"
     main(my_gcp)
     
     # data_properties = get_dimensions_from_bq(id=table_id, GCP=my_gcp, schema='mlz')
