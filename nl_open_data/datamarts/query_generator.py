@@ -1,6 +1,5 @@
 from nl_open_data.config import GCP
 from nl_open_data.config import get_config
-from nimbletl.tasks import table_description
 from google.cloud import bigquery
 
 
@@ -19,7 +18,7 @@ def get_dimensions_from_bq(id, schema="cbs", credentials=None, GCP=None):
 
     # initialize client
     bq = bigquery.Client(credentials=credentials, project=GCP.project)
-    
+
     # prepare sql query text
     query = f"""
     SELECT Key, Title, Type
@@ -32,8 +31,8 @@ def get_dimensions_from_bq(id, schema="cbs", credentials=None, GCP=None):
 
 
 def write_select_dimensions(dims_dict):
-    """Create a string for a SELECT part of an SQL query for dimension table
-    
+    """Create a string for a SELECT part of an SQL query for dimension tables
+
     Given a dictionary key-value pairs, this function outputs a string to be
     used as part of an SQL SELECT section. This is meant to be used when
     flatenning a table, and the given dict should contain all Key-Title pairs
@@ -57,6 +56,15 @@ def write_select_dimensions(dims_dict):
 
 
 def write_join_dimensions(dims_dict, join_type, id, schema, GCP):
+    """Creates the join section of an sql query for dimension tables
+
+    Given a dictionary key-value pairs, this function outputs a string to be
+    used as part of an SQL JOIN section. This is meant to be used when
+    flatenning a table, and the given dict should contain all Key-Title pairs
+    of the relevant dimensions.
+
+    For more details: https://www.cbs.nl/-/media/statline/documenten/handleiding-cbs-opendata-services.pdf?la=nl-nl
+    """
     if join_type.upper() not in ["INNER", "LEFT", "RIGHT", "FULL"]:
         print('join_type must be one of: "INNER", "LEFT", "RIGHT", "FULL"')
         return None
@@ -70,12 +78,12 @@ def write_join_dimensions(dims_dict, join_type, id, schema, GCP):
 
 
 def flatten_table(id, join_type="INNER", schema="cbs", credentials=None, GCP=None):
-    """
-    create a
+    """Flatten a table by joining a fact table (TypedDataSet) with its
+    corresponding dimension tables.
     """
     # get title
     # title = short title from TableInfos? From user? Other idea?
-    title = "Gebieden in Nederland 2020"  # temp - use static
+    title = "Gebieden in Nederland 2020"  # temp - use static TODO
     title = title.lower().replace(" ", "_")  # pythonize title string
 
     # get dimension info
