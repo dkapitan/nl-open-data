@@ -90,6 +90,17 @@ def get_config(config):
                 tmp=Path("tmp"),
             ),
         ),
+        "ag": dict(
+            gcp=GCP(project="dataverbinders-dev", location="EU"),
+            path=Paths(
+                root=Path.home() / "Projects/nl-open-data",
+                # agb=Path("agb"),
+                # vektis_open_data=Path("vektis/open-data"),
+                cbs=Path("cbs"),
+                # bag=Path("bag"),
+                tmp=Path("tmp"),
+            ),
+        )
     }
     try:
         return Config(**configs[config])
