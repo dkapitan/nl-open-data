@@ -123,7 +123,7 @@ def flatten_table(id, join_type="INNER", schema="cbs", credentials=None, GCP=Non
     """
     # get title
     # title = short title from TableInfos? From user? Other idea?
-    title = "Gebieden in Nederland 2020"  # temp - use static TODO
+    title = "Insert Title Here"  # temp - use static TODO
     title = title.lower().replace(" ", "_")  # pythonize title string
 
     # get dimension info
@@ -155,7 +155,7 @@ def flatten_table(id, join_type="INNER", schema="cbs", credentials=None, GCP=Non
     # CREATE statement
     create = f"CREATE OR REPLACE TABLE {GCP.project}.dso.{title}"
 
-    # PARTITION statement #TODO - how to decide on times??
+    # PARTITION statement #TODO - how to decide on times?? Is it always years?
     partition = ""
 
     # SELECT statement
