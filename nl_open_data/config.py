@@ -13,9 +13,9 @@ def get_gcloud_adc():
       see https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login
     - Use service accounts and setting `GOOGLE_APPLICATION_CREDENTIALS`,
       see https://cloud.google.com/docs/authentication/production
-    
+
     Note prefect uses `google.oauth2.service_account.Credentials.from_service_account_info()
-    for initialising clients. 
+    for initialising clients.
     See https://google-auth.readthedocs.io/en/latest/reference/google.oauth2.service_account.html
 
     """
@@ -90,6 +90,17 @@ def get_config(config):
                 tmp=Path("tmp"),
             ),
         ),
+        "ag": dict(
+            gcp=GCP(project="dataverbinders-dev", location="EU"),
+            path=Paths(
+                root=Path.home() / "Projects/nl-open-data",
+                # agb=Path("agb"),
+                # vektis_open_data=Path("vektis/open-data"),
+                cbs=Path("cbs"),
+                # bag=Path("bag"),
+                tmp=Path("tmp"),
+            ),
+        )
     }
     try:
         return Config(**configs[config])
