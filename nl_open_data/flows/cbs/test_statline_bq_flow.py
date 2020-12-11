@@ -12,23 +12,15 @@ from statline_bq.utils import (
 from prefect import task, Flow, unmapped, Parameter
 
 # Converting functions to tasks
-check_v4_task = task(check_v4)
-get_urls_task = task(get_urls)
-create_named_dir_task = task(create_named_dir)
-tables_to_parquet_task = task(tables_to_parquet)
-get_dataset_description_task = task(get_dataset_description)
-write_description_to_file_task = task(write_description_to_file)
-get_file_names_task = task(get_file_names)
-upload_to_gcs_task = task(upload_to_gcs)
-gcs_to_gbq_task = task(gcs_to_gbq)
-
-
-@task
-def convert_bool_to_version(boolean):
-    if boolean:
-        return "v4"
-    else:
-        return "v3"
+check_v4 = task(check_v4)
+get_urls = task(get_urls)
+create_named_dir = task(create_named_dir)
+tables_to_parquet = task(tables_to_parquet)
+get_dataset_description = task(get_dataset_description)
+write_description_to_file = task(write_description_to_file)
+get_file_names = task(get_file_names)
+upload_to_gcs = task(upload_to_gcs)
+gcs_to_gbq = task(gcs_to_gbq)
 
 
 # ids = ["83583NED"]
@@ -42,33 +34,30 @@ with Flow("CBS") as flow:
     config = Parameter("config")
     third_party = Parameter("third_party", default=False)
 
-    is_v4 = check_v4_task.map(ids)
-    odata_versions = convert_bool_to_version.map(is_v4)
-    urls = get_urls_task.map(ids, odata_version=odata_versions)
-    pq_dir = create_named_dir_task.map(
+    odata_versions = check_v4.map(ids)
+    urls = get_urls.map(ids, odata_version=odata_versions)
+    pq_dir = create_named_dir.map(
         id=ids,
         odata_version=odata_versions,
         source=unmapped(source),
         config=unmapped(config),
     )
-    files_parquet = tables_to_parquet_task.map(
+    files_parquet = tables_to_parquet.map(
         id=ids,
         urls=urls,
         odata_version=odata_versions,
         source=unmapped(source),
         pq_dir=pq_dir,
     )
-    descriptions = get_dataset_description_task.map(
-        urls=urls, odata_version=odata_versions
-    )
-    write_description_to_file_task.map(
+    descriptions = get_dataset_description.map(urls=urls, odata_version=odata_versions)
+    write_description_to_file.map(
+        description_text=descriptions,
+        id=ids,
         pq_dir=pq_dir,
         source=unmapped(source),
         odata_version=odata_versions,
-        id=ids,
-        description_text=descriptions,
     )
-    gcs_folders = upload_to_gcs_task.map(
+    gcs_folders = upload_to_gcs.map(
         dir=pq_dir,
         source=unmapped(source),
         odata_version=odata_versions,
@@ -76,8 +65,8 @@ with Flow("CBS") as flow:
         config=unmapped(config),
         upstream_tasks=[files_parquet, descriptions],
     )
-    file_names = get_file_names_task.map(files_parquet)
-    bq_jobs = gcs_to_gbq_task.map(
+    file_names = get_file_names.map(files_parquet)
+    bq_jobs = gcs_to_gbq.map(
         id=ids,
         source=unmapped(source),
         odata_version=odata_versions,
