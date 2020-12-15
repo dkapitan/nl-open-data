@@ -23,8 +23,8 @@ upload_to_gcs = task(upload_to_gcs)
 gcs_to_gbq = task(gcs_to_gbq)
 
 
-# ids = ["83583NED"]
-ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]
+ids = ["83583NED"]
+# ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]
 
 
 with Flow("CBS") as flow:
@@ -50,12 +50,13 @@ with Flow("CBS") as flow:
         pq_dir=pq_dir,
     )
     descriptions = get_dataset_description.map(urls=urls, odata_version=odata_versions)
-    write_description_to_file.map(
+    desc_files = write_description_to_file.map(
         description_text=descriptions,
         id=ids,
         pq_dir=pq_dir,
         source=unmapped(source),
         odata_version=odata_versions,
+        upstream_tasks=[descriptions],
     )
     gcs_folders = upload_to_gcs.map(
         dir=pq_dir,
@@ -63,7 +64,7 @@ with Flow("CBS") as flow:
         odata_version=odata_versions,
         id=ids,
         config=unmapped(config),
-        upstream_tasks=[files_parquet, descriptions],
+        upstream_tasks=[files_parquet, desc_files],
     )
     file_names = get_file_names.map(files_parquet)
     bq_jobs = gcs_to_gbq.map(
