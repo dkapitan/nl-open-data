@@ -1,6 +1,13 @@
 ## nl-open-data
 
-Datawarehouse of various Dutch open data sources with focus on healthcare and public domain. It is the overaching library orchestrating the upload of datasets from various sources into Google Big Query.
+A Flexible Python ETL toolkit for datawarehousing framework based on Dask, Prefect and the pydata stack. It follows the [original design principles](https://stories.dask.org/en/latest/prefect-workflows.html) from these libraries, combined with a [functional programming approach to data engineering](https://medium.com/@maximebeauchemin/functional-data-engineering-a-modern-paradigm-for-batch-data-processing-2327ec32c42a).
+
+[Google Cloud Platform (GCP)](https://cloud.google.com/docs/) is used as the core infrastructure, particularly [BigQuery (GBQ)](https://cloud.google.com/bigquery/docs/) and [Cloud Storage (GCS)](https://cloud.google.com/storage/) as the main storage engines. We follow Google's recommendations on how to use [BigQuery for data warehouse applications](https://cloud.google.com/solutions/bigquery-data-warehouse) with four layers:
+
+- source data, in production environment or file-based
+- staging, on GCS
+- datavaault, on GBQ
+- datamarts, on GBQ using [ARRAY_AGG, STRUCT, UNNEST SQL-pattern](https://medium.freecodecamp.org/exploring-a-powerful-sql-pattern-array-agg-struct-and-unnest-b7dcc6263e36)
 
 
 ### Motivation
@@ -13,6 +20,14 @@ In order to take advantage of open data, the ability to mix various datasets tog
 
 ### Installation
 
+Using pip:
+    `pip install nl_open_data` -> **NOT IMPLEMENTED YET**
+
+Using Poetry:
+    Being a [Poetry](https://python-poetry.org/) managed package, installing via Poetry is also possible. Assuming Poetry is already installed:
+    
+1. Clone the repository
+2. From your local clone's root folder, run `poetry install`
 <!-- Use `gcloud` to initiatlize a project. To setup BigQuery run
 
 ```
@@ -21,7 +36,7 @@ In order to take advantage of open data, the ability to mix various datasets tog
 
 ### Configuration
 
-There are two elements that need to be configured prior to using the CLI. If using as an imported library the exact usage determines wheteher these are both needed (or just one, or none)
+There are two elements that need to be configured prior to using the library.
 
 #### 1. GCP and Paths through config.toml
 
@@ -45,15 +60,8 @@ Correct nesting in config file:
     bucket = "my_prod_bucket"
     location = "EU"
 ```
-Addiotionally, the local paths used by the library can configured here. Under `[paths]` define the path to the library, and other temporary folders if desired.
+Additionally, the local paths used by the library can configured here. Under `[paths]`, define the path to the library, and other temporary folders.
 
-#### 2. Datasets through `datasets.toml`
-
-Provide a list of all CBS dataset ids that are to be uploaded to GCP. i.e.:
-
-`ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]`
-
-This should be given by directly editing `nl-open-data/nl_open_data/datasets.toml`
 
 ### Credits
 
