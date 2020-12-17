@@ -33,6 +33,7 @@ with Flow("CBS") as flow:
     source = Parameter("source", default="cbs")
     config = Parameter("config")
     third_party = Parameter("third_party", default=False)
+    gcp_env = Parameter("gcp_env", default="dev")
 
     odata_versions = check_v4.map(ids)
     urls = get_urls.map(ids, odata_version=odata_versions)
@@ -64,6 +65,7 @@ with Flow("CBS") as flow:
         odata_version=odata_versions,
         id=ids,
         config=unmapped(config),
+        gcp_env=unmapped(gcp_env),
         upstream_tasks=[files_parquet, desc_files],
     )
     file_names = get_file_names.map(files_parquet)
@@ -75,6 +77,7 @@ with Flow("CBS") as flow:
         config=unmapped(config),
         gcs_folder=gcs_folders,
         file_names=file_names,
+        gcp_env=unmapped(gcp_env),
         upstream_tasks=[gcs_folders],
     )
 

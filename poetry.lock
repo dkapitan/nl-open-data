@@ -281,7 +281,7 @@ pyflakes = ">=2.2.0,<2.3.0"
 
 [[package]]
 name = "fsspec"
-version = "0.8.4"
+version = "0.8.5"
 description = "File-system specification"
 category = "main"
 optional = false
@@ -1393,7 +1393,7 @@ description = "Library to upload CBS open datasets into Google Cloud Platform"
 category = "main"
 optional = false
 python-versions = "^3.8"
-develop = false
+develop = true
 
 [package.dependencies]
 click = "^7.1.2"
@@ -1411,10 +1411,8 @@ toml = "^0.10.2"
 tomlkit = "^0.7.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/dataverbinders/statline-bq.git"
-reference = "main"
-resolved_reference = "aefff52c6b12877176d3d988898db471c2b87ba4"
+type = "directory"
+url = "../statline-bq"
 
 [[package]]
 name = "stringcase"
@@ -1579,7 +1577,7 @@ heapdict = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "d02d7fd2a74afc57a2a1caf322c52cbbf7e9887498109945c21900786c2eee59"
+content-hash = "dc568450c0ac4968d74899412ca831e44d2f5eacef5776f093b91f20209da5e9"
 
 [metadata.files]
 alabaster = [
@@ -1714,8 +1712,8 @@ flake8 = [
     {file = "flake8-3.8.4.tar.gz", hash = "sha256:aadae8761ec651813c24be05c6f7b4680857ef6afaae4651a4eccaef97ce6c3b"},
 ]
 fsspec = [
-    {file = "fsspec-0.8.4-py3-none-any.whl", hash = "sha256:404194b0cf93128d980689fe9a49013ee9676edd1ab7f0f15b737b2cedb0ab88"},
-    {file = "fsspec-0.8.4.tar.gz", hash = "sha256:e1e494d4814f6804769f3c7bfd7a722a15113cc0339d14755297f09306b8f21f"},
+    {file = "fsspec-0.8.5-py3-none-any.whl", hash = "sha256:5629dc945800873cb2092df806c854e74c2799f4854247bce37ca7171000a7ec"},
+    {file = "fsspec-0.8.5.tar.gz", hash = "sha256:890c6ce9325030f03bd2eae81389ddcbcee53bdd475334ca064595e1e45f92a6"},
 ]
 google-api-core = [
     {file = "google-api-core-1.24.0.tar.gz", hash = "sha256:6f7ff9c88af7b76a33e7cd04999f763a21b40efc64ac5ec488ea2918a94b354b"},
