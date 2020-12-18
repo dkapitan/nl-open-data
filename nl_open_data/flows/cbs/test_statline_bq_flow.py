@@ -5,9 +5,14 @@ from statline_bq.utils import (
     tables_to_parquet,
     get_dataset_description,
     write_description_to_file,
+    get_column_descriptions,
+    write_col_decription_to_file,
     get_file_names,
     upload_to_gcs,
     gcs_to_gbq,
+    set_gcp,
+    get_col_descs_from_gcs,
+    bq_update_main_table_col_descriptions,
 )
 from prefect import task, Flow, unmapped, Parameter
 
@@ -18,13 +23,18 @@ create_named_dir = task(create_named_dir)
 tables_to_parquet = task(tables_to_parquet)
 get_dataset_description = task(get_dataset_description)
 write_description_to_file = task(write_description_to_file)
+get_column_descriptions = task(get_column_descriptions)
+write_col_decription_to_file = task(write_col_decription_to_file)
 get_file_names = task(get_file_names)
 upload_to_gcs = task(upload_to_gcs)
 gcs_to_gbq = task(gcs_to_gbq)
+set_gcp = task(set_gcp)
+get_col_descs_from_gcs = task(get_col_descs_from_gcs)
+bq_update_main_table_col_descriptions = task(bq_update_main_table_col_descriptions)
 
 
-ids = ["83583NED"]
-# ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]
+# ids = ["83583NED"]
+ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]
 
 
 with Flow("CBS") as flow:
@@ -59,6 +69,17 @@ with Flow("CBS") as flow:
         odata_version=odata_versions,
         upstream_tasks=[descriptions],
     )
+    col_descriptions = get_column_descriptions.map(
+        urls=urls, odata_version=odata_versions
+    )
+    col_desc_files = write_col_decription_to_file.map(
+        id=ids,
+        col_desc=col_descriptions,
+        pq_dir=pq_dir,
+        source=unmapped(source),
+        odata_version=odata_versions,
+        upstream_tasks=[col_descriptions],
+    )
     gcs_folders = upload_to_gcs.map(
         dir=pq_dir,
         source=unmapped(source),
@@ -66,10 +87,10 @@ with Flow("CBS") as flow:
         id=ids,
         config=unmapped(config),
         gcp_env=unmapped(gcp_env),
-        upstream_tasks=[files_parquet, desc_files],
+        upstream_tasks=[files_parquet, desc_files, col_desc_files],
     )
     file_names = get_file_names.map(files_parquet)
-    bq_jobs = gcs_to_gbq.map(
+    dataset_refs = gcs_to_gbq.map(
         id=ids,
         source=unmapped(source),
         odata_version=odata_versions,
@@ -80,6 +101,22 @@ with Flow("CBS") as flow:
         gcp_env=unmapped(gcp_env),
         upstream_tasks=[gcs_folders],
     )
+    desc_dicts = get_col_descs_from_gcs.map(
+        id=ids,
+        source=unmapped(source),
+        odata_version=odata_versions,
+        config=unmapped(config),
+        gcp_env=unmapped(gcp_env),
+        gcs_folder=gcs_folders,
+        upstream_tasks=[gcs_folders],
+    )
+    bq_updates = bq_update_main_table_col_descriptions.map(
+        dataset_ref=dataset_refs,
+        descriptions=desc_dicts,
+        config=unmapped(config),
+        gcp_env=unmapped(gcp_env),
+        upstream_tasks=[desc_dicts],
+    )
 
 if __name__ == "__main__":
     from statline_bq.config import get_config
@@ -87,4 +124,4 @@ if __name__ == "__main__":
 
     config_file = Path.home() / Path("Projects/nl-open-data/nl_open_data/config.toml")
     config = get_config(config_file)
-    flow.run(parameters={"config": config, "source": "cbs"})
+    state = flow.run(parameters={"config": config, "source": "cbs"})
