@@ -14,3 +14,4 @@ install: pip install -U tox-travis
 script: tox
 
 
+# Example of Poetry implemented travis.yml https://github.com/pyslackers/slack-sansio/blob/2adb7c285deccbbb915d3890c27dc6d9adf38a3c/.travis.yml

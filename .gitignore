@@ -106,3 +106,9 @@ ENV/
 dask-worker-space/
 
 .DS_Store
+
+# Local testing notebook
+test.ipynb
+
+# Local temp files
+temp/

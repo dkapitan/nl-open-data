@@ -19,21 +19,26 @@ Loads the following CBS datasets into BigQuery:
 """
 
 from pathlib import Path
-import requests
+
+# import requests
 from zipfile import ZipFile
 
 
 from google.cloud import bigquery
 import pandas as pd
-import prefect
-from prefect import task, Parameter, Flow, unmapped
-from prefect.tasks.shell import ShellTask
-from prefect.engine.executors import DaskExecutor
-from prefect.triggers import all_successful
 
-from nimbletl.tasks import curl_cmd, cbsodatav3_to_gbq
-from nimbletl.utilities import clean_python_name
-from nl_open_data.config import get_config
+# import prefect
+from prefect import task, Parameter, Flow, unmapped
+
+from prefect.tasks.shell import ShellTask
+
+# from prefect.engine.executors import DaskExecutor
+# from prefect.triggers import all_successful
+
+from statline_bq.tasks import cbs_odata_to_gbq, curl_cmd
+from statline_bq.config import get_config
+
+# from nl_open_data.config import get_config
 
 URL_TABLES = "https://opendata.cbs.nl/ODataCatalog/Tables?$format=json"
 URL_PC6HUISNR = (
@@ -60,7 +65,7 @@ ODATA_REGIONAAL = [
     "83619NED",  # 2016
     "83817NED",  # 2017
     "84420NED",  # 2018
-    "84662NED"   # 2019
+    "84662NED",  # 2019
 ]
 
 ODATA_BEVOLKING = "03759ned"  # https://opendata.cbs.nl/statline/portal.html?_la=nl&_catalog=CBS&tableId=03759ned&_theme=259
@@ -106,6 +111,7 @@ def pc6huisnr_to_gbq(zipfile=None, credentials=None, GCP=None):
     return jobs
 
 
+config = Parameter("config", required=True)
 gcp = Parameter("gcp", required=True)
 filepath = Parameter("filepath", required=True)
 curl_download = ShellTask(name="curl_download")
@@ -113,11 +119,17 @@ curl_download = ShellTask(name="curl_download")
 
 with Flow("CBS regionaal") as flow:
     # # TODO: fix UnicodeDecodeError when writing to Google Drive
-    curl_command = curl_cmd(URL_PC6HUISNR, filepath)
+    # curl_command = curl_cmd(URL_PC6HUISNR, filepath)
     # curl_download = curl_download(command=curl_command)
     # gwb = pc6huisnr_to_gbq(zipfile=filepath, GCP=gcp, upstream_tasks=[curl_download])
-    regionaal = cbsodatav3_to_gbq.map(id=ODATA_REGIONAAL, GCP=unmapped(gcp), task_args={'skip_on_upstream_skip': False})
-    regionaal_column_description = column_descriptions.map(table_id=ODATA_REGIONAAL, GCP=unmapped(gcp), upstream_tasks=[regionaal])
+    regionaal = cbs_odata_to_gbq.map(
+        id=ODATA_REGIONAAL,
+        config=unmapped(config),
+        task_args={"skip_on_upstream_skip": False},
+    )
+    # regionaal_column_description = column_descriptions.map(TODO: Add column descriptions to bq, probably in statline-bq
+    #     table_id=ODATA_REGIONAAL, GCP=unmapped(gcp), upstream_tasks=[regionaal]
+    # )
 
 
 def main(config):
@@ -126,20 +138,32 @@ def main(config):
 
     """ Trigger in Prefect, load column description first and when finished only then load the data.
     """
-    flow.set_reference_tasks([regionaal_column_description])
+    # flow.set_reference_tasks([regionaal_column_description])
 
     # executor = DaskExecutor(n_workers=8)
     flow.run(
         # executor=executor,
         parameters={
-            "gcp": config.gcp,
-            "filepath": config.path.root
-            / config.path.cbs
-            / URL_PC6HUISNR.split("/")[-1],
+            "config": config,
+            # "filepath": Path.home()
+            # / config.paths.root
+            # / config.paths.cbs
+            # / URL_PC6HUISNR.split("/")[-1],
+            # "gcp": config.gcp.dev,
         },
     )
 
 
 if __name__ == "__main__":
-    config = get_config("dataverbinders")
+    config_file = Path.home() / Path("Projects/nl-open-data/nl_open_data/config.toml")
+    config = get_config(config_file)
     main(config=config)
+# # %%
+# from statline_bq.config import get_config, Config
+# from pathlib import Path
+
+# # %%
+# config_file = Path.home() / Path("Projects/nl-open-data/nl_open_data/config.toml")
+# config = get_config(config_file)
+# # %%
+# config.paths

@@ -3,25 +3,24 @@ name = "nl-open-data"
 version = "0.1.0"
 description = "Datawarehouse of various Dutch open data sources with focus on healthcare and public domain."
 authors = ["Daniel Kapitan <daniel@kapitan.net>"]
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-bokeh = "^2.1.1"
 click = "^7.1.2"
-dask = "^2.21.0"
 google-auth = "^1.19.2"
 google-cloud-core = "^1.3.0"
 google-cloud-bigquery = "^1.26.1"
 google-cloud-storage = "^1.30.0"
 prefect = "^0.13.5"
-cbsodata = "^1.3.1"
-pandas-gbq = "^0.13.2"
 requests = "^2.24.0"
 pyarrow = "^2.0.0"
 bunch = "^1.0.1"
 lxml = "^4.5.2"
 xmltodict = "^0.12.0"
-nimbletl = {git = "https://github.com/dkapitan/nimbletl.git"}
+statline_bq = {git = "https://github.com/dataverbinders/statline-bq.git", branch = "main"} # takes main branch of statline-bq from github
+# statline_bq = {path = "/Users/tslilstrauss/Projects/statline-bq", develop = true} # takes statline-bq from a local path
+pandas = "^1.1.5"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
@@ -31,7 +30,8 @@ ipython = "^7.16.1"
 jedi = "^0.17.2"
 pdoc3 = "^0.8.4"
 pytest = "^5.2"
-Sphinx = "^3.1.2"
+prefect = {extras = ["viz"], version = "^0.13.18"}
+
 
 [tool.dephell.main]
 from = {format = "poetry", path = "pyproject.toml"}
@@ -46,6 +46,6 @@ from = {format = "poetry", path = "pyproject.toml"}
 to = {format = "conda", path = "environment.yaml"}
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 

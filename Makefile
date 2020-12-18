@@ -95,6 +95,7 @@ poetry: ## generate setup.py, environment.yml and requirements.txt from poetry
 	dephell deps convert --env requirements
 	dephell deps convert --env conda
 
+# Redundant for CBS. Maybe for the rest?
 bq-datasets:
 	bq --location=EU mk -d --description "Data from CBS Statline" cbs
 	bq --location=EU mk -d --description "Data from Kadaster" kadaster

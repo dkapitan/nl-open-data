@@ -42,8 +42,20 @@ gcp = Parameter("gcp", required=True)
 
 with Flow("CBS regionaal") as flow:
     # # TODO: fix UnicodeDecodeError when writing to Google Drive
-    mlz = cbsodatav3_to_gbq(id=ODATA_MLZ[1], schema='mlz', third_party=True, GCP=gcp, task_args={'skip_on_upstream_skip': False})
-    mlz_column_description = column_descriptions(table_id=ODATA_MLZ[1], third_party=True, schema_bq="mlz", GCP=gcp, upstream_tasks=[mlz])
+    mlz = cbsodatav3_to_gbq(
+        id=ODATA_MLZ[1],
+        schema="mlz",
+        third_party=True,
+        GCP=gcp,
+        task_args={"skip_on_upstream_skip": False},
+    )
+    mlz_column_description = column_descriptions(
+        table_id=ODATA_MLZ[1],
+        third_party=True,
+        schema_bq="mlz",
+        GCP=gcp,
+        upstream_tasks=[mlz],
+    )
 
 
 def main(config):
@@ -57,9 +69,7 @@ def main(config):
     # executor = DaskExecutor(n_workers=8)
     flow.run(
         # executor=executor,
-        parameters={
-            "gcp": config.gcp,
-        },
+        parameters={"gcp": config.gcp,},
     )
 
 
