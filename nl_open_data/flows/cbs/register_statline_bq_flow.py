@@ -11,7 +11,7 @@ can be accessed by accessing `config`. For example, `config.gcp.dev`.
 # the config object must be imported from config.py before any Prefect imports
 from nl_open_data.config import config
 
-from box import Box
+# from box import Box
 from prefect import task, Flow, unmapped, Parameter
 from prefect.executors import DaskExecutor
 from statline_bq.utils import (
@@ -57,8 +57,10 @@ gcs_to_gbq = task(gcs_to_gbq)
 get_col_descs_from_gcs = task(get_col_descs_from_gcs)
 bq_update_main_table_col_descriptions = task(bq_update_main_table_col_descriptions)
 
-with Flow("FLOW_NAME") as statline_flow:
-    """[FLOW SUMMARY]
+with Flow("statline-bq") as statline_flow:
+    """A Prefect flow to upload datasets from CBS Statline to Google BigQuery.
+
+    A Prefect based equivalent of the standlone `statline_bq.utils.cbsodata_to_gbq()`.
 
     Parameters
     ----------
@@ -79,13 +81,14 @@ with Flow("FLOW_NAME") as statline_flow:
         If set to True, processes datasets, even if Modified dates are
         identical in source and target locations.
     """
+
     ids = Parameter("ids")
     source = Parameter("source", default="cbs")
     third_party = Parameter("third_party", default=False)
     gcp_env = Parameter("gcp_env", default="dev")
     force = Parameter("force", default=False)
 
-    config = Box({"paths": config.paths, "gcp": config.gcp})
+    # config = Box({"paths": config.paths, "gcp": config.gcp})
 
     odata_versions = check_v4.map(ids)
     gcp = set_gcp(config, gcp_env)
@@ -187,7 +190,17 @@ with Flow("FLOW_NAME") as statline_flow:
 if __name__ == "__main__":
     # Register flow
     statline_flow.executor = DaskExecutor()
-    statline_flow.register(project_name="nl_open_data")
+    flow_id = statline_flow.register(project_name="nl_open_data")
+    #TODO: write flow_id (and other info?) to file?
+    
+    """
+    Output registration, 2020-01-11, 10:28
+    --------------------------------------
+        Flow URL: https://cloud.prefect.io/dataverbinders/flow/4c26dd66-a858-4210-9ca1-927153de4816
+    └── ID: 5c66c7e3-ba9f-4a8c-9b7e-9dc85ea158a7
+    └── Project: nl_open_data
+    └── Labels: ['tud0029822']
+    """
 
     # Run locally
     # ids = ["83583NED"]

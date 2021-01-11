@@ -155,15 +155,4 @@ def main(config):
 
 
 if __name__ == "__main__":
-    config_file = Path.home() / Path("Projects/nl-open-data/nl_open_data/config.toml")
-    config = get_config(config_file)
-    main(config=config)
-# # %%
-# from statline_bq.config import get_config, Config
-# from pathlib import Path
-
-# # %%
-# config_file = Path.home() / Path("Projects/nl-open-data/nl_open_data/config.toml")
-# config = get_config(config_file)
-# # %%
-# config.paths
+    
