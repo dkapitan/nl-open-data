@@ -56,9 +56,11 @@ statline_parameters = {
     "gcp_env": GCP_ENV,
     "force": FORCE,
 }
-flow_run_id = client.create_flow_run(
-    version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
-)
+# flow_run_id = client.create_flow_run(
+#     version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
+# )
+
+####################
 
 # Zipped csv folder flow
 URL_PC6HUISNR = (
@@ -69,31 +71,19 @@ LOCAL_FOLDER = str(
 )  # TODO: organize better for deployment?
 CSV_DELIMITER = ";"
 BQ_DATASET_NAME = "buurt_wijk_gemeente_pc"
-GCS_FOLDER = SOURCE + BQ_DATASET_NAME
-BQ_DESCRIPTION = "CBS definitions for geographical division on various levels"
+GCS_FOLDER = SOURCE + "/" + BQ_DATASET_NAME
+BQ_DATASET_DESCRIPTION = "CBS definitions for geographical division on various granularity levels"  # TODO: Better description
 
 zip_parameters = {
     "url": URL_PC6HUISNR,
-    "local_folder": LOCAL_FOLDER,
+    # "local_folder": LOCAL_FOLDER,
     "csv_delimiter": CSV_DELIMITER,
     "gcs_folder": GCS_FOLDER,
     "bq_dataset_name": BQ_DATASET_NAME,
+    "bq_dataset_description": BQ_DATASET_DESCRIPTION,
     "source": SOURCE,
 }
-
 
 flow_run_id = client.create_flow_run(
     version_group_id=ZIP_VERSION_GROUP_ID, parameters=zip_parameters
 )
-
-# state = zip_flow.run(
-#     parameters={
-#         # "filepath": filepath,
-#         # "local_folder": local_folder,
-#         "url": URL_PC6HUISNR,
-#         "csv_delimiter": ";",
-#         "gcs_folder": gcs_folder,
-#         "bq_dataset_name": dataset_name,
-#         "source": "cbs",
-#     }
-# )

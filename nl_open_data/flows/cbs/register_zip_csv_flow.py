@@ -47,9 +47,7 @@ with Flow("zipped_csv") as zip_flow:
 
     url = Parameter("url")
     local_folder = Parameter(
-        "local_folder",
-        # default=Path(__file__).parent
-        # / config.paths.temp,  # TODO: Cannot serialize PosixPath, therefore cannot use as default on Prefect Cloud. Change to a different way.
+        "local_folder", default=str(Path(__file__).parent / config.paths.temp)
     )
     csv_delimiter = Parameter("csv_delimiter", default=".")
     gcs_folder = Parameter("gcs_folder")
@@ -84,6 +82,7 @@ with Flow("zipped_csv") as zip_flow:
         config=config,
         gcp_env=gcp_env,
         source=source,
+        description=bq_dataset_description,
         upstream_tasks=[gcs_ids],
     )
     nlt.remove_dir(local_dir, upstream_tasks=[gcs_ids])
@@ -101,9 +100,10 @@ if __name__ == "__main__":
     """
 Output last registration
 ------------------------
-    Flow URL: https://cloud.prefect.io/dataverbinders/flow/24e3c567-88c7-4a6e-8333-72a9cd1abebd
- └── ID: 0e93c1a8-cbbe-49e3-9546-d32facc04004
+Result check: OK
+Flow URL: https://cloud.prefect.io/dataverbinders/flow/24e3c567-88c7-4a6e-8333-72a9cd1abebd
+ └── ID: b91257e3-7c63-468c-9460-c7403e602a0a
  └── Project: nl_open_data
  └── Labels: ['tud0029822']
- └── Registered on: 2021-01-12 17:05:36.864067
+ └── Registered on: 2021-01-12 18:27:56.586313
     """
