@@ -9,8 +9,9 @@ can be accessed by accessing `config`. For example, `config.gcp.dev`.
 """
 
 # the config object must be imported from config.py before any Prefect imports
-from datetime import datetime
 from nl_open_data.config import config
+
+from datetime import datetime
 
 # from box import Box
 from prefect import task, Flow, unmapped, Parameter

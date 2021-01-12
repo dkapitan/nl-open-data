@@ -15,11 +15,13 @@ import nl_open_data.utils as nlu
 
 
 @task
-def split(string, **kwargs):
-    split = string.split(kwargs)
-    print()
-    print(split)
-    return split
+def path_wrap(string):
+    return Path(string)
+
+
+@task
+def get_filename_from_url(url):
+    return url.split("/")[-1]
 
 
 @task

@@ -3,9 +3,12 @@
 TODO: Docstring
 
 """
+# the config object must be imported from config.py before any Prefect imports
 from nl_open_data.config import config
 
 from pathlib import Path
+from datetime import datetime
+
 from prefect import Flow, unmapped, Parameter
 from prefect.tasks.shell import ShellTask
 from prefect.triggers import all_finished
@@ -19,7 +22,7 @@ nlt.remove_dir.trigger = all_finished
 
 curl_download = ShellTask(name="curl_download")
 
-with Flow("zipped_csv_folder") as zip_flow:
+with Flow("zipped_csv") as zip_flow:
     """[SUMMARY]
 
     Parameters
@@ -42,11 +45,11 @@ with Flow("zipped_csv_folder") as zip_flow:
         The source of the data, used for naming and folder placements in GCS and BQ
     """
 
-    # config = Parameter("config")
-    # filepath = Parameter("filepath", required=True)
     url = Parameter("url")
     local_folder = Parameter(
-        "local_folder", default=Path(__file__).parent / config.paths.temp
+        "local_folder",
+        # default=Path(__file__).parent
+        # / config.paths.temp,  # TODO: Cannot serialize PosixPath, therefore cannot use as default on Prefect Cloud. Change to a different way.
     )
     csv_delimiter = Parameter("csv_delimiter", default=".")
     gcs_folder = Parameter("gcs_folder")
@@ -57,9 +60,8 @@ with Flow("zipped_csv_folder") as zip_flow:
     )  # TODO: implement
     source = Parameter("source", required=False)
 
-    temp = nlt.split(url, separator="/")[-1]
-
-    filepath = local_folder / Path(temp)
+    filename = nlt.get_filename_from_url(url)
+    filepath = local_folder / nlt.path_wrap(filename)
 
     local_dir = nlt.create_dir(local_folder)
     curl_command = nlt.curl_cmd(url, filepath, limit_retries=False)
@@ -87,31 +89,21 @@ with Flow("zipped_csv_folder") as zip_flow:
     nlt.remove_dir(local_dir, upstream_tasks=[gcs_ids])
 
 if __name__ == "__main__":
-    # # Register flow
-    # zip_flow.executor = DaskExecutor()
-    # flow_id = zip_flow.register(
-    #     project_name="nl_open_data", version_group_id="statline_bq"
-    # )
-    # print(f" └── Registered on: {datetime.today()}")
-
-    # Run locally
-    URL_PC6HUISNR = (
-        "https://www.cbs.nl/-/media/_excel/2019/42/2019-cbs-pc6huisnr20190801_buurt.zip"
+    # Register flow
+    zip_flow.executor = DaskExecutor()
+    print("Output last registration")
+    print("------------------------")
+    flow_id = zip_flow.register(
+        project_name="nl_open_data", version_group_id="zipped_csv"
     )
+    print(f" └── Registered on: {datetime.today()}")
 
-    # local_folder = Path(__file__).parent / config.paths.temp / config.paths.cbs
-    # filepath = local_folder / Path(URL_PC6HUISNR.split("/")[-1])
-    dataset_name = "buurt_wijk_gemeente_pc"
-    gcs_folder = "cbs/" + dataset_name
-
-    state = zip_flow.run(
-        parameters={
-            "filepath": filepath,
-            "local_folder": local_folder,
-            "url": URL_PC6HUISNR,
-            "csv_delimiter": ";",
-            "gcs_folder": gcs_folder,
-            "dataset_name": dataset_name,
-            "source": "cbs",
-        }
-    )
+    """
+Output last registration
+------------------------
+    Flow URL: https://cloud.prefect.io/dataverbinders/flow/24e3c567-88c7-4a6e-8333-72a9cd1abebd
+ └── ID: 0e93c1a8-cbbe-49e3-9546-d32facc04004
+ └── Project: nl_open_data
+ └── Labels: ['tud0029822']
+ └── Registered on: 2021-01-12 17:05:36.864067
+    """
