@@ -15,6 +15,24 @@ import nl_open_data.utils as nlu
 
 
 @task
+def split(string, **kwargs):
+    split = string.split(kwargs)
+    print()
+    print(split)
+    return split
+
+
+@task
+def upper(string):
+    return string.upper()
+
+
+@task
+def lower(string):
+    return string.lower()
+
+
+@task
 def skip_task(x):
     if x:
         raise SKIP

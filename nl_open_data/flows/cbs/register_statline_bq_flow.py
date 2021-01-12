@@ -9,6 +9,7 @@ can be accessed by accessing `config`. For example, `config.gcp.dev`.
 """
 
 # the config object must be imported from config.py before any Prefect imports
+from datetime import datetime
 from nl_open_data.config import config
 
 # from box import Box
@@ -35,7 +36,7 @@ from statline_bq.utils import (
     bq_update_main_table_col_descriptions,
 )
 
-from nl_open_data.tasks import remove_dir, skip_task
+from nl_open_data.tasks import upper, lower, remove_dir, skip_task
 
 # Converting statline-bq functions to tasks
 check_gcp_env = task(check_gcp_env)
@@ -88,8 +89,10 @@ with Flow("statline-bq") as statline_flow:
     gcp_env = Parameter("gcp_env", default="dev")
     force = Parameter("force", default=False)
 
-    # config = Box({"paths": config.paths, "gcp": config.gcp})
-
+    ids = upper.map(
+        ids
+    )  # TODO: Do we need a different variable name here (ids_upper = ...)?
+    gcp_env = lower(gcp_env)  # TODO: Do we need a different variable name here?
     odata_versions = check_v4.map(ids)
     gcp = set_gcp(config, gcp_env)
     urls = get_urls.map(
@@ -133,7 +136,6 @@ with Flow("statline-bq") as statline_flow:
         source=unmapped(source),
         odata_version=odata_versions,
         upstream_tasks=[go_nogo],
-        # upstream_tasks=[source_metas],
     )
     col_desc_files = dict_to_json_file.map(
         id=ids,
@@ -143,7 +145,6 @@ with Flow("statline-bq") as statline_flow:
         source=unmapped(source),
         odata_version=odata_versions,
         upstream_tasks=[go_nogo],
-        # upstream_tasks=[col_descriptions],
     )
     gcs_folders = upload_to_gcs.map(
         dir=pq_dir,
@@ -190,19 +191,22 @@ with Flow("statline-bq") as statline_flow:
 if __name__ == "__main__":
     # Register flow
     statline_flow.executor = DaskExecutor()
-    flow_id = statline_flow.register(project_name="nl_open_data")
-    #TODO: write flow_id (and other info?) to file?
-    
+    flow_id = statline_flow.register(
+        project_name="nl_open_data", version_group_id="statline_bq"
+    )
+    print(f" └── Registered on: {datetime.today()}")
+
     """
-    Output registration, 2020-01-11, 10:28
-    --------------------------------------
-        Flow URL: https://cloud.prefect.io/dataverbinders/flow/4c26dd66-a858-4210-9ca1-927153de4816
-    └── ID: 5c66c7e3-ba9f-4a8c-9b7e-9dc85ea158a7
+    Output last registration
+    ------------------------
+    Flow URL: https://cloud.prefect.io/dataverbinders/flow/eef07631-c5d3-4313-9b2c-41b1e8d180a8
+    └── ID: 2dedcace-27ec-42b9-8be7-dcdd954078e4
     └── Project: nl_open_data
     └── Labels: ['tud0029822']
+    └── Registered on: 2021-01-12 14:52:31.387941
     """
 
     # Run locally
-    # ids = ["83583NED"]
+    # ids = ["83583ned"]
     # ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]
     # state = statline_flow.run(parameters={"ids": ids, "force": False})
