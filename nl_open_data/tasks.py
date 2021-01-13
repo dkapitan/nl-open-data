@@ -15,6 +15,26 @@ import nl_open_data.utils as nlu
 
 
 @task
+def path_wrap(string):
+    return Path(string)
+
+
+@task
+def get_filename_from_url(url):
+    return url.split("/")[-1]
+
+
+@task
+def upper(string):
+    return string.upper()
+
+
+@task
+def lower(string):
+    return string.lower()
+
+
+@task
 def skip_task(x):
     if x:
         raise SKIP

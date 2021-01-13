@@ -1,12 +1,11 @@
-from pathlib import Path
+from nl_open_data.config import config
+
 import requests
 
 from google.cloud import bigquery
 import pandas as pd
 from prefect import task, Parameter, Flow
 from prefect.utilities.tasks import unmapped
-
-from nl_open_data.config import get_config
 
 
 CATALOGS = {
@@ -17,20 +16,20 @@ CATALOGS = {
 
 
 @task(name="CBS ODATA catalogs")
-def odatav3_catalog_to_gbq(catalog=None, schema="cbs", GCP=None):
+def odatav3_catalog_to_gbq(catalog=None, schema="catalogs", GCP=None):
     """Loads catalogs of CBS odata v3 and v4.
 
     Args:
         - catalog (str, str): tuple with name of table and url
     """
-    bq = bigquery.Client(project=GCP.project)
+    bq = bigquery.Client(project=GCP.project_id)
     job_config = bigquery.LoadJobConfig()
     job_config.write_disposition = "WRITE_TRUNCATE"
     df = pd.DataFrame(requests.get(catalog[1]).json()["value"])
     job = bq.load_table_from_dataframe(
         dataframe=df,
         destination=f"{schema}.{catalog[0]}",
-        project=GCP.project,
+        project=GCP.project_id,
         location=GCP.location,
     )
     return job
@@ -38,15 +37,17 @@ def odatav3_catalog_to_gbq(catalog=None, schema="cbs", GCP=None):
 
 gcp = Parameter("gcp", required=True)
 with Flow("CBS catalogs") as flow:
-    odatav3 = odatav3_catalog_to_gbq.map(catalog=list(CATALOGS.items()), GCP=unmapped(gcp))
+    odatav3 = odatav3_catalog_to_gbq.map(
+        catalog=list(CATALOGS.items()), GCP=unmapped(gcp)
+    )
 
 
-def main(config):
+def main():
     """Executes vektis.agb.flow in DaskExecutor.
     """
-    flow.run(parameters={"gcp": config.gcp})
+    flow.run(parameters={"gcp": config.gcp.dev})
 
 
 if __name__ == "__main__":
-    config = get_config("dataverbinders")
-    main(config=config)
+    # config = get_config("dataverbinders")
+    main()
