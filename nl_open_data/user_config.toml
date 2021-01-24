@@ -1,3 +1,6 @@
+[cloud]
+use_local_secrets = false
+
 [gcp]
     [gcp.prod]
     project_id = "dataverbinders"

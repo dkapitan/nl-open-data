@@ -13,9 +13,9 @@ from nl_open_data.config import config
 
 from datetime import datetime
 
-# from box import Box
 from prefect import task, Flow, unmapped, Parameter
 from prefect.executors import DaskExecutor
+from prefect.client import Secret
 from statline_bq.utils import (
     check_gcp_env,
     check_v4,
@@ -90,6 +90,7 @@ with Flow("statline-bq") as statline_flow:
     gcp_env = Parameter("gcp_env", default="dev")
     force = Parameter("force", default=False)
 
+    gcp_credentials = Secret("GCP_CREDENTIALS").get()
     ids = upper.map(
         ids
     )  # TODO: Do we need a different variable name here (ids_upper = ...)?
@@ -192,6 +193,8 @@ with Flow("statline-bq") as statline_flow:
 if __name__ == "__main__":
     # Register flow
     statline_flow.executor = DaskExecutor()
+    print("Output last registration")
+    print("------------------------")
     flow_id = statline_flow.register(
         project_name="nl_open_data", version_group_id="statline_bq"
     )
@@ -201,10 +204,10 @@ if __name__ == "__main__":
     Output last registration
     ------------------------
     Flow URL: https://cloud.prefect.io/dataverbinders/flow/eef07631-c5d3-4313-9b2c-41b1e8d180a8
-    └── ID: 2dedcace-27ec-42b9-8be7-dcdd954078e4
+    └── ID: 36aed3bf-d5ad-4863-903f-08075b77b052
     └── Project: nl_open_data
     └── Labels: ['tud0029822']
-    └── Registered on: 2021-01-12 14:52:31.387941
+    └── Registered on: 2021-01-21 16:59:49.649501
     """
 
     # Run locally

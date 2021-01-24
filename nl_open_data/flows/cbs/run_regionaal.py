@@ -56,9 +56,9 @@ statline_parameters = {
     "gcp_env": GCP_ENV,
     "force": FORCE,
 }
-# flow_run_id = client.create_flow_run(
-#     version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
-# )
+flow_run_id = client.create_flow_run(
+    version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
+)
 
 ####################
 

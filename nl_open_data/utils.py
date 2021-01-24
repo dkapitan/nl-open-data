@@ -4,8 +4,14 @@ from pathlib import Path
 from google.cloud import storage
 from google.cloud import bigquery
 from google.cloud import exceptions
+from google.oauth2 import service_account
 
 from statline_bq.config import Config, GcpProject
+
+
+def get_gcp_credentials(json_acct_info):
+    credentials = service_account.Credentials.from_service_account_info(json_acct_info)
+    return credentials
 
 
 def create_dir_util(path: Union[Path, str]) -> Path:
@@ -42,7 +48,7 @@ def set_gcp(config: Config, gcp_env: str) -> GcpProject:
     return config_envs[gcp_env]
 
 
-def check_bq_dataset(dataset_id: str, gcp: GcpProject) -> bool:
+def check_bq_dataset(dataset_id: str, gcp: GcpProject, credentials: str = None) -> bool:
     """Check if dataset exists in BQ.
 
     Parameters
@@ -57,7 +63,7 @@ def check_bq_dataset(dataset_id: str, gcp: GcpProject) -> bool:
         - True if exists, False if does not exists
     """
 
-    client = bigquery.Client(project=gcp.project_id)
+    client = bigquery.Client(project=gcp.project_id, credentials=credentials)
 
     try:
         client.get_dataset(dataset_id)  # Make an API request.
