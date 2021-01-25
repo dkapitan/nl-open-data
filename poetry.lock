@@ -164,6 +164,14 @@ diagnostics = ["bokeh (>=1.0.0,!=2.0.0)"]
 distributed = ["distributed (>=2.0)"]
 
 [[package]]
+name = "dataclasses"
+version = "0.6"
+description = "A backport of the dataclasses module for Python 3.6"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "dataclasses-json"
 version = "0.5.2"
 description = "Easily serialize dataclasses to and from JSON"
@@ -984,13 +992,14 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "pyserde"
-version = "0.2.1"
+version = "0.2.2"
 description = "Serialization library on top of dataclasses."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
+dataclasses = "*"
 jinja2 = "*"
 stringcase = "*"
 toml = {version = "*", optional = true, markers = "extra == \"toml\""}
@@ -1164,12 +1173,12 @@ python-versions = "*"
 
 [[package]]
 name = "statline-bq"
-version = "0.1.0"
+version = "0.1.2"
 description = "Library to upload CBS open datasets into Google Cloud Platform"
 category = "main"
 optional = false
 python-versions = "^3.8"
-develop = true
+develop = false
 
 [package.dependencies]
 click = "^7.1.2"
@@ -1179,7 +1188,6 @@ google-auth = "^1.19.2"
 google-cloud-bigquery = "^1.26.1"
 google-cloud-core = "^1.3.0"
 google-cloud-storage = "^1.30.0"
-prefect = "^0.14.0"
 pyarrow = "^2.0.0"
 pyserde = {version = "^0.2.0", extras = ["toml"]}
 requests = "^2.24.0"
@@ -1187,8 +1195,10 @@ toml = "^0.10.2"
 tomlkit = "^0.7.0"
 
 [package.source]
-type = "directory"
-url = "../statline-bq"
+type = "git"
+url = "https://github.com/dataverbinders/statline-bq.git"
+reference = "main"
+resolved_reference = "7dcfcfd863318e03cc09b0cbd9efe2ce39c41a4d"
 
 [[package]]
 name = "stringcase"
@@ -1353,7 +1363,7 @@ heapdict = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b688a6d27422e61af316320c27625b6f42125ff0f8948e512712a08551c268a8"
+content-hash = "ef5abb95089d94a459ea35a4ab4428eb926fae8da8e4f6300ace344e931415e3"
 
 [metadata.files]
 appdirs = [
@@ -1451,6 +1461,10 @@ croniter = [
 dask = [
     {file = "dask-2.30.0-py3-none-any.whl", hash = "sha256:4c215aa55951f570b5a294b2ce964ed801c6efd766231c53447460e60f73ea14"},
     {file = "dask-2.30.0.tar.gz", hash = "sha256:a1669022e25de99b227c3d83da4801f032415962dac431099bf0534648e41a54"},
+]
+dataclasses = [
+    {file = "dataclasses-0.6-py3-none-any.whl", hash = "sha256:454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f"},
+    {file = "dataclasses-0.6.tar.gz", hash = "sha256:6988bd2b895eef432d562370bb707d540f32f7360ab13da45340101bc2307d84"},
 ]
 dataclasses-json = [
     {file = "dataclasses-json-0.5.2.tar.gz", hash = "sha256:56ec931959ede74b5dedf65cf20772e6a79764d20c404794cce0111c88c085ff"},
@@ -1961,8 +1975,8 @@ pyparsing = [
     {file = "pyparsing-2.4.7.tar.gz", hash = "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1"},
 ]
 pyserde = [
-    {file = "pyserde-0.2.1-py3-none-any.whl", hash = "sha256:891289d8b2eb67fb202ec2cccb817c9c188497a83bc21d9c0db969108048d9aa"},
-    {file = "pyserde-0.2.1.tar.gz", hash = "sha256:7b4cb6b4a5c806d65ab260664357620e72ef680604f9f541e1ab7c24b777863a"},
+    {file = "pyserde-0.2.2-py3-none-any.whl", hash = "sha256:bef911d6223c7aa4ad697b791e99d01b871a972876eb2cc01aad9a80f8debb4a"},
+    {file = "pyserde-0.2.2.tar.gz", hash = "sha256:a132e8ffef59ac8be6012c6df5ddf13d53f8cc110bb920cb0530f339f0527423"},
 ]
 pytest = [
     {file = "pytest-5.4.3-py3-none-any.whl", hash = "sha256:5c0db86b698e8f170ba4582a492248919255fcd4c79b1ee64ace34301fb589a1"},

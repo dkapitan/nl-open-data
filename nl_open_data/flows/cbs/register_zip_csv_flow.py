@@ -57,6 +57,9 @@ with Flow("zipped_csv") as zip_flow:
         "bq_dataset_description", default=None
     )  # TODO: implement
     source = Parameter("source", required=False)
+    service_account_info = Parameter("service_account_info")
+
+    gcp_credentials = nlt.get_gcp_credentials(service_account_info)
 
     filename = nlt.get_filename_from_url(url)
     filepath = local_folder / nlt.path_wrap(filename)
@@ -74,6 +77,7 @@ with Flow("zipped_csv") as zip_flow:
         gcs_folder=unmapped(gcs_folder),
         config=unmapped(config),
         gcp_env=unmapped(gcp_env),
+        credentials=unmapped(gcp_credentials),
         upstream_tasks=[pq_files],
     )
     tables = nlt.gcs_to_bq(
@@ -82,6 +86,7 @@ with Flow("zipped_csv") as zip_flow:
         config=config,
         gcp_env=gcp_env,
         source=source,
+        credentials=unmapped(gcp_credentials),
         description=bq_dataset_description,
         upstream_tasks=[gcs_ids],
     )
@@ -102,8 +107,8 @@ Output last registration
 ------------------------
 Result check: OK
 Flow URL: https://cloud.prefect.io/dataverbinders/flow/24e3c567-88c7-4a6e-8333-72a9cd1abebd
- └── ID: b91257e3-7c63-468c-9460-c7403e602a0a
+ └── ID: dfe6b519-e20d-4de8-8188-8bf195168d83
  └── Project: nl_open_data
  └── Labels: ['tud0029822']
- └── Registered on: 2021-01-12 18:27:56.586313
+ └── Registered on: 2021-01-26 12:58:09.831253
     """

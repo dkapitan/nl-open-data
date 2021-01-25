@@ -9,8 +9,11 @@ TODO: Add docstring
 """
 from pathlib import Path
 
+# the config object must be imported from config.py before any Prefect imports
 from nl_open_data.config import config
+
 from prefect import Client
+from prefect.client import Secret
 
 STATLINE_VERSION_GROUP_ID = "statline_bq"
 ZIP_VERSION_GROUP_ID = "zipped_csv"
@@ -18,7 +21,7 @@ ZIP_VERSION_GROUP_ID = "zipped_csv"
 TENANT_SLUG = "dataverbinders"
 ODATA_REGIONAAL = [  # TODO: check datasets, add and organize
     # Regionale kerncijfers Nederland
-    "70072NED"
+    "70072NED",
     # Kerncijfers wijken en buurten
     "84583NED",  # 2019
     "84286NED",  # 2018
@@ -44,6 +47,7 @@ SOURCE = "cbs"
 THIRD_PARTY = False
 GCP_ENV = "dev"
 FORCE = False
+SERVICE_ACCOUNT_INFO = Secret("GCP_CREDENTIALS").get()
 
 client = Client()  # Local api key has been stored previously
 client.login_to_tenant(tenant_slug=TENANT_SLUG)  # For user-scoped API token
@@ -55,6 +59,7 @@ statline_parameters = {
     "third_party": THIRD_PARTY,
     "gcp_env": GCP_ENV,
     "force": FORCE,
+    "service_account_info": SERVICE_ACCOUNT_INFO,
 }
 flow_run_id = client.create_flow_run(
     version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
@@ -82,6 +87,7 @@ zip_parameters = {
     "bq_dataset_name": BQ_DATASET_NAME,
     "bq_dataset_description": BQ_DATASET_DESCRIPTION,
     "source": SOURCE,
+    "service_account_info": SERVICE_ACCOUNT_INFO,
 }
 
 flow_run_id = client.create_flow_run(

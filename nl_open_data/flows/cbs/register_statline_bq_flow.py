@@ -14,8 +14,8 @@ from nl_open_data.config import config
 from datetime import datetime
 
 from prefect import task, Flow, unmapped, Parameter
-from prefect.executors import DaskExecutor
 from prefect.client import Secret
+from prefect.executors import DaskExecutor
 from statline_bq.utils import (
     check_gcp_env,
     check_v4,
@@ -37,7 +37,7 @@ from statline_bq.utils import (
     bq_update_main_table_col_descriptions,
 )
 
-from nl_open_data.tasks import upper, lower, remove_dir, skip_task
+from nl_open_data.tasks import get_gcp_credentials, upper, lower, remove_dir, skip_task
 
 # Converting statline-bq functions to tasks
 check_gcp_env = task(check_gcp_env)
@@ -82,6 +82,11 @@ with Flow("statline-bq") as statline_flow:
     force : bool, default = False
         If set to True, processes datasets, even if Modified dates are
         identical in source and target locations.
+
+    service_account_info : str (JSON)
+        A service account info from GCP provided as a JSON string, such
+        as the one required by:
+        google.oauth2.service_account.Credentials.from_service_account_info()
     """
 
     ids = Parameter("ids")
@@ -89,8 +94,9 @@ with Flow("statline-bq") as statline_flow:
     third_party = Parameter("third_party", default=False)
     gcp_env = Parameter("gcp_env", default="dev")
     force = Parameter("force", default=False)
+    service_account_info = Parameter("service_account_info")
 
-    gcp_credentials = Secret("GCP_CREDENTIALS").get()
+    gcp_credentials = get_gcp_credentials(service_account_info)
     ids = upper.map(
         ids
     )  # TODO: Do we need a different variable name here (ids_upper = ...)?
@@ -102,7 +108,11 @@ with Flow("statline-bq") as statline_flow:
     )
     source_metas = get_metadata_cbs.map(urls=urls, odata_version=odata_versions)
     gcp_metas = get_metadata_gcp.map(
-        id=ids, source=unmapped(source), odata_version=odata_versions, gcp=unmapped(gcp)
+        id=ids,
+        source=unmapped(source),
+        odata_version=odata_versions,
+        gcp=unmapped(gcp),
+        credentials=unmapped(gcp_credentials),
     )  # TODO: skip if force=True
     cbs_modifieds = get_from_meta.map(meta=source_metas, key=unmapped("Modified"))
     gcp_modifieds = get_gcp_modified.map(
@@ -155,6 +165,7 @@ with Flow("statline-bq") as statline_flow:
         id=ids,
         config=unmapped(config),
         gcp_env=unmapped(gcp_env),
+        credentials=unmapped(gcp_credentials),
         upstream_tasks=[files_parquet, col_desc_files, go_nogo],
     )
     file_names = get_file_names.map(files_parquet, upstream_tasks=[go_nogo],)
@@ -167,6 +178,7 @@ with Flow("statline-bq") as statline_flow:
         gcs_folder=gcs_folders,
         file_names=file_names,
         gcp_env=unmapped(gcp_env),
+        credentials=unmapped(gcp_credentials),
         upstream_tasks=[gcs_folders, go_nogo],
     )
     desc_dicts = get_col_descs_from_gcs.map(
@@ -176,6 +188,7 @@ with Flow("statline-bq") as statline_flow:
         config=unmapped(config),
         gcp_env=unmapped(gcp_env),
         gcs_folder=gcs_folders,
+        credentials=unmapped(gcp_credentials),
         upstream_tasks=[gcs_folders, go_nogo],
     )
     bq_updates = bq_update_main_table_col_descriptions.map(
@@ -183,7 +196,8 @@ with Flow("statline-bq") as statline_flow:
         descriptions=desc_dicts,
         config=unmapped(config),
         gcp_env=unmapped(gcp_env),
-        upstream_tasks=[desc_dicts, go_nogo],
+        credentials=unmapped(gcp_credentials),
+        upstream_tasks=[desc_dicts, go_nogo],  # TODO: Add dataset_refs as upstream?
     )
     remove = remove_dir.map(
         pq_dir, upstream_tasks=[gcs_folders]
@@ -193,24 +207,46 @@ with Flow("statline-bq") as statline_flow:
 if __name__ == "__main__":
     # Register flow
     statline_flow.executor = DaskExecutor()
-    print("Output last registration")
+    print("Registration Output")
     print("------------------------")
     flow_id = statline_flow.register(
         project_name="nl_open_data", version_group_id="statline_bq"
     )
     print(f" └── Registered on: {datetime.today()}")
 
-    """
-    Output last registration
-    ------------------------
-    Flow URL: https://cloud.prefect.io/dataverbinders/flow/eef07631-c5d3-4313-9b2c-41b1e8d180a8
-    └── ID: 36aed3bf-d5ad-4863-903f-08075b77b052
-    └── Project: nl_open_data
-    └── Labels: ['tud0029822']
-    └── Registered on: 2021-01-21 16:59:49.649501
-    """
+    ########################
 
     # Run locally
     # ids = ["83583ned"]
     # ids = ["83583NED", "83765NED", "84799NED", "84583NED", "84286NED"]
     # state = statline_flow.run(parameters={"ids": ids, "force": False})
+
+    ########################
+
+    # Schedule flow-run on prefect cloud
+    from prefect import Client
+
+    STATLINE_VERSION_GROUP_ID = "statline_bq"
+
+    TENANT_SLUG = "dataverbinders"
+    DATA = ["83583NED"]
+    SOURCE = "cbs"
+    THIRD_PARTY = False
+    GCP_ENV = "dev"
+    FORCE = False
+    SERVICE_ACCOUNT_INFO = Secret("GCP_CREDENTIALS").get()
+
+    client = Client()  # Local api key has been stored previously
+    client.login_to_tenant(tenant_slug=TENANT_SLUG)  # For user-scoped API token
+
+    statline_parameters = {
+        "ids": DATA,
+        "source": SOURCE,
+        "third_party": THIRD_PARTY,
+        "gcp_env": GCP_ENV,
+        "force": FORCE,
+        "service_account_info": SERVICE_ACCOUNT_INFO,
+    }
+    flow_run_id = client.create_flow_run(
+        version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
+    )

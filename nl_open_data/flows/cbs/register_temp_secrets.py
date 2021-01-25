@@ -1,10 +1,10 @@
 from nl_open_data.config import config
 from prefect import Flow, task, Parameter
 
-from nl_open_data.utils import check_bq_dataset, get_gcp_credentials
+from nl_open_data.utils import check_bq_dataset
+from nl_open_data.tasks import get_gcp_credentials
 
 check_bq_dataset = task(check_bq_dataset)
-get_gcp_credentials = task(get_gcp_credentials)
 
 with Flow("test_secrets") as flow:
     service_account_info = Parameter("service_account_info")

@@ -4,18 +4,20 @@ from pathlib import Path
 from google.cloud import storage
 from google.cloud import bigquery
 from google.cloud import exceptions
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+
+# from google.oauth2 import service_account
 
 from statline_bq.config import Config, GcpProject
 
 
-def get_gcp_credentials(
-    service_account_info,
-):  # ADD TYPE CHECKING service_account_info / Credentials
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_info
-    )
-    return credentials
+# def get_gcp_credentials(
+#     service_account_info,
+# ):  # ADD TYPE CHECKING service_account_info / Credentials
+#     credentials = service_account.Credentials.from_service_account_info(
+#         service_account_info
+#     )
+#     return credentials
 
 
 def create_dir_util(path: Union[Path, str]) -> Path:
@@ -52,7 +54,9 @@ def set_gcp(config: Config, gcp_env: str) -> GcpProject:
     return config_envs[gcp_env]
 
 
-def check_bq_dataset(dataset_id: str, gcp: GcpProject, credentials: str = None) -> bool:
+def check_bq_dataset(
+    dataset_id: str, gcp: GcpProject, credentials: Credentials = None
+) -> bool:
     """Check if dataset exists in BQ.
 
     Parameters
@@ -76,7 +80,9 @@ def check_bq_dataset(dataset_id: str, gcp: GcpProject, credentials: str = None) 
         return False
 
 
-def delete_bq_dataset(dataset_id: str, gcp: GcpProject) -> None:
+def delete_bq_dataset(
+    dataset_id: str, gcp: GcpProject, credentials: Credentials = None
+) -> None:
     """Delete an exisiting dataset from Google Big Query.
 
     If dataset does not exists, does nothing.
@@ -94,16 +100,22 @@ def delete_bq_dataset(dataset_id: str, gcp: GcpProject) -> None:
     """
 
     # Construct a bq client
-    client = bigquery.Client(project=gcp.project_id)
+    client = bigquery.Client(project=gcp.project_id, credentials=credentials)
 
     # Delete the dataset and its contents
-    client.delete_dataset(dataset_id, delete_contents=True, not_found_ok=True)
+    client.delete_dataset(
+        dataset_id, delete_contents=True, not_found_ok=True, credentials=credentials
+    )
 
     return None
 
 
 def create_bq_dataset(
-    name: str, gcp: GcpProject, source: str = None, description: str = None,
+    name: str,
+    gcp: GcpProject,
+    source: str = None,
+    description: str = None,
+    credentials: Credentials = None,
 ) -> str:
     """Creates a dataset in Google Big Query. If dataset exists already exists, does nothing.
 
@@ -125,7 +137,7 @@ def create_bq_dataset(
     """
 
     # Construct a BigQuery client object.
-    client = bigquery.Client(project=gcp.project_id)
+    client = bigquery.Client(project=gcp.project_id, credentials=credentials)
 
     # Set dataset_id to the ID of the dataset to create.
     dataset_id = f"{client.project}.{source}_{name}"
@@ -151,15 +163,17 @@ def create_bq_dataset(
         return dataset.dataset_id
 
 
-def link_parquet_to_bq_dataset(gcs_folder: str, gcp: GcpProject, dataset_id: str):
+def link_parquet_to_bq_dataset(
+    gcs_folder: str, gcp: GcpProject, dataset_id: str, credentials: Credentials = None,
+):
 
     # Get blobs within gcs_folder
-    storage_client = storage.Client(project=gcp.project_id)
+    storage_client = storage.Client(project=gcp.project_id, credentials=credentials)
     blobs = storage_client.list_blobs(gcp.bucket, prefix=gcs_folder)
     names = [blob.name for blob in blobs]
 
     # Initialize client
-    bq_client = bigquery.Client(project=gcp.project_id)
+    bq_client = bigquery.Client(project=gcp.project_id, credentials=credentials)
 
     # Configure the external data source
     dataset_ref = bigquery.DatasetReference(gcp.project_id, dataset_id)

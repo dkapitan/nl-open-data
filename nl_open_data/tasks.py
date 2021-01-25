@@ -3,8 +3,11 @@ from pathlib import Path
 import os
 from shutil import rmtree
 from zipfile import ZipFile
+from collections.abc import Mapping
 
 from google.cloud import storage
+from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from pyarrow import csv
 import pyarrow.parquet as pq
 from prefect.engine.signals import SKIP
@@ -12,6 +15,14 @@ from prefect import task
 from statline_bq.config import Config
 
 import nl_open_data.utils as nlu
+
+
+@task
+def get_gcp_credentials(service_account_info: dict) -> Credentials:
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info
+    )
+    return credentials
 
 
 @task
@@ -203,15 +214,36 @@ def csv_to_parquet(
 
 @task
 def upload_to_gcs(
-    to_upload: Union[str, Path], gcs_folder: str, config: Config, gcp_env: str = "dev",
+    to_upload: Union[str, Path],
+    gcs_folder: str,
+    config: Config,
+    gcp_env: str = "dev",
+    credentials: Credentials = None,
 ) -> list:
+    """Uploads a single file or multiple files in a single directory to Google Cloud Storage.
 
+    Parameters
+    ----------
+    to_upload: Path
+        Path object to a directory containing files to be uploaded
+    gcs_folder: str
+        GCS folder (=blob) to upload the files into
+    config: Config
+        Config object holding GCP configurations
+    gcp_env: str
+        determines which GCP configuration to use from config.gcp
+
+    Returns
+    -------
+    gcs_folder: str
+        The folder (=blob) into which the tables have been uploaded # TODO -> Return success/ fail code?/job ID
+    """
     to_upload = Path(to_upload)
 
     # Set GCP params
     gcp = nlu.set_gcp(config=config, gcp_env=gcp_env)
     gcs_folder = gcs_folder.rstrip("/")
-    gcs = storage.Client(project=gcp.project_id)
+    gcs = storage.Client(project=gcp.project_id, credentials=credentials)
     gcs_bucket = gcs.get_bucket(gcp.bucket)
     # List to return blob ids
     ids = []
@@ -235,6 +267,7 @@ def gcs_to_bq(
     dataset_name: str,
     config: Config = None,
     gcp_env: str = "dev",
+    credentials: Credentials = None,
     **kwargs,
 ):
     gcp = nlu.set_gcp(config=config, gcp_env=gcp_env)
@@ -246,15 +279,17 @@ def gcs_to_bq(
         dataset_id = dataset_name
 
     # Check if dataset exists and delete if it does TODO: maybe delete anyway (deleting currently uses not_found_ok to ignore error if does not exist)
-    if nlu.check_bq_dataset(dataset_id=dataset_id, gcp=gcp):
-        nlu.delete_bq_dataset(dataset_id=dataset_id, gcp=gcp)
+    if nlu.check_bq_dataset(dataset_id=dataset_id, gcp=gcp, credentials=credentials):
+        nlu.delete_bq_dataset(dataset_id=dataset_id, gcp=gcp, credentials=credentials)
 
     # Create dataset and reset dataset_id to new dataset
-    dataset_id = nlu.create_bq_dataset(name=dataset_name, gcp=gcp, **kwargs)
+    dataset_id = nlu.create_bq_dataset(
+        name=dataset_name, gcp=gcp, **kwargs, credentials=credentials
+    )
 
     # Link parquet files in GCS to tables in BQ dataset
     tables = nlu.link_parquet_to_bq_dataset(
-        gcs_folder=gcs_folder, gcp=gcp, dataset_id=dataset_id
+        gcs_folder=gcs_folder, gcp=gcp, dataset_id=dataset_id, credentials=credentials
     )
 
     return tables

@@ -110,6 +110,7 @@ dask-worker-space/
 
 # Local testing notebook
 test.ipynb
+test2.ipynb
 
 # Local temp files
 temp/
