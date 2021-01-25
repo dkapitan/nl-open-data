@@ -9,8 +9,12 @@ from google.oauth2 import service_account
 from statline_bq.config import Config, GcpProject
 
 
-def get_gcp_credentials(json_acct_info):
-    credentials = service_account.Credentials.from_service_account_info(json_acct_info)
+def get_gcp_credentials(
+    service_account_info,
+):  # ADD TYPE CHECKING service_account_info / Credentials
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info
+    )
     return credentials
 
 
