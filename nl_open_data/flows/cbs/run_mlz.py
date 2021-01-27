@@ -5,6 +5,7 @@ TODO: Add docstring?
 [^mlz]: https://mlzopendata.cbs.nl/#/MLZ/nl/
 """
 from nl_open_data.config import config
+from datetime import datetime
 from prefect import Client
 
 # client parameters
@@ -32,5 +33,5 @@ parameters = {
     "force": FORCE,
 }
 flow_run_id = client.create_flow_run(
-    version_group_id=VERSION_GROUP_ID, parameters=parameters
+    version_group_id=VERSION_GROUP_ID, run_name=RUN_NAME, parameters=parameters
 )

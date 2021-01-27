@@ -1,4 +1,5 @@
 from nl_open_data.config import config
+from datetime import datetime
 from prefect import Client
 
 # Schedules a flow-run on prefect cloud
