@@ -7,14 +7,20 @@ TODO: Add docstring?
 from nl_open_data.config import config
 from prefect import Client
 
-VERSION_GROUP_ID = "statline_bq"
-
+# client parameters
 TENANT_SLUG = "dataverbinders"
+
+# flow parameters
 ODATA_MLZ = ["40061NED", "40060NED"]
 SOURCE = "mlz"
 THIRD_PARTY = True
 GCP_ENV = "dev"
 FORCE = False
+
+# run parameters
+VERSION_GROUP_ID = "statline_bq"
+RUN_NAME = f"mlz_{datetime.today().date()}_{datetime.today().time()}"
+
 
 client = Client()  # Local api key has been stored previously
 client.login_to_tenant(tenant_slug=TENANT_SLUG)  # For user-scoped API token

@@ -7,18 +7,19 @@ TODO: Add docstring
 [^adres]: https://www.cbs.nl/nl-nl/maatwerk/2019/42/buurt-wijk-en-gemeente-2019-voor-postcode-huisnummer
 
 """
+from datetime import datetime
 from pathlib import Path
 
 from nl_open_data.config import config
 from prefect import Client
 
-STATLINE_VERSION_GROUP_ID = "statline_bq"
-ZIP_VERSION_GROUP_ID = "zipped_csv"
-
+# client parameters
 TENANT_SLUG = "dataverbinders"
+
+# flow parameters
 ODATA_REGIONAAL = [  # TODO: check datasets, add and organize
     # Regionale kerncijfers Nederland
-    "70072NED"
+    "70072NED",
     # Kerncijfers wijken en buurten
     "84583NED",  # 2019
     "84286NED",  # 2018
@@ -45,6 +46,12 @@ THIRD_PARTY = False
 GCP_ENV = "dev"
 FORCE = False
 
+# run parameters
+STATLINE_VERSION_GROUP_ID = "statline_bq"
+STATLINE_RUN_NAME = (
+    f"regionaal_statline_{datetime.today().date()}_{datetime.today().time()}"
+)
+
 client = Client()  # Local api key has been stored previously
 client.login_to_tenant(tenant_slug=TENANT_SLUG)  # For user-scoped API token
 
@@ -56,13 +63,16 @@ statline_parameters = {
     "gcp_env": GCP_ENV,
     "force": FORCE,
 }
-# flow_run_id = client.create_flow_run(
-#     version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
-# )
+flow_run_id = client.create_flow_run(
+    version_group_id=STATLINE_VERSION_GROUP_ID,
+    run_name=STATLINE_RUN_NAME,
+    parameters=statline_parameters,
+)
 
-####################
+#################################################################################
 
 # Zipped csv folder flow
+# flow parameters
 URL_PC6HUISNR = (
     "https://www.cbs.nl/-/media/_excel/2019/42/2019-cbs-pc6huisnr20190801_buurt.zip"
 )
@@ -73,6 +83,10 @@ CSV_DELIMITER = ";"
 BQ_DATASET_NAME = "buurt_wijk_gemeente_pc"
 GCS_FOLDER = SOURCE + "/" + BQ_DATASET_NAME
 BQ_DATASET_DESCRIPTION = "CBS definitions for geographical division on various granularity levels"  # TODO: Better description
+
+# run parameters
+ZIP_VERSION_GROUP_ID = "zipped_csv"
+ZIP_RUN_NAME = f"regionaal_zip_{datetime.today().date()}_{datetime.today().time()}"
 
 zip_parameters = {
     "url": URL_PC6HUISNR,
@@ -85,5 +99,7 @@ zip_parameters = {
 }
 
 flow_run_id = client.create_flow_run(
-    version_group_id=ZIP_VERSION_GROUP_ID, parameters=zip_parameters
+    version_group_id=ZIP_VERSION_GROUP_ID,
+    run_name=ZIP_RUN_NAME,
+    parameters=zip_parameters,
 )

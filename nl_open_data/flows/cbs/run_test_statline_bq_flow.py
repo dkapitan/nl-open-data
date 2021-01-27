@@ -1,15 +1,21 @@
 from nl_open_data.config import config
 from prefect import Client
 
-# Schedule flow-run on prefect cloud
+# Schedules a flow-run on prefect cloud
 
-STATLINE_VERSION_GROUP_ID = "statline_bq"
+# client parameters
 TENANT_SLUG = "dataverbinders"
+
+# flow parameters
 DATA = ["83583NED"]
 SOURCE = "cbs"
 THIRD_PARTY = False
 GCP_ENV = "dev"
 FORCE = False
+
+# run parameters
+STATLINE_VERSION_GROUP_ID = "statline_bq"
+RUN_NAME = f"test_statline-bq_{datetime.today().date()}_{datetime.today().time()}"
 
 client = Client()  # Local api key has been stored previously
 client.login_to_tenant(tenant_slug=TENANT_SLUG)  # For user-scoped API token
