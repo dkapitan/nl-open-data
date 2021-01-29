@@ -11,11 +11,13 @@ can be accessed by accessing `config`. For example, `config.gcp.dev`.
 # the config object must be imported from config.py before any Prefect imports
 from nl_open_data.config import config
 
+import sys
 from datetime import datetime
 
 # from box import Box
 from prefect import task, Flow, unmapped, Parameter
 from prefect.executors import DaskExecutor
+from prefect.run_configs import LocalRun
 from statline_bq.utils import (
     check_gcp_env,
     check_v4,
@@ -192,20 +194,19 @@ with Flow("statline-bq") as statline_flow:
 if __name__ == "__main__":
     # Register flow
     statline_flow.executor = DaskExecutor()
-    flow_id = statline_flow.register(
-        project_name="nl_open_data", version_group_id="statline_bq"
-    )
-    print(f" └── Registered on: {datetime.today()}")
+    # If no lables are provided - automatically assigns current machine as label
+    try:
+        labels = sys.argv[1:]
+        statline_flow.run_config = LocalRun(labels=labels)
+        flow_id = statline_flow.register(
+            project_name="nl_open_data", version_group_id="statline_bq"
+        )
 
-    """
-    Output last registration
-    ------------------------
-    Flow URL: https://cloud.prefect.io/dataverbinders/flow/eef07631-c5d3-4313-9b2c-41b1e8d180a8
-    └── ID: 2dedcace-27ec-42b9-8be7-dcdd954078e4
-    └── Project: nl_open_data
-    └── Labels: ['tud0029822']
-    └── Registered on: 2021-01-12 14:52:31.387941
-    """
+    # Assign provided labels to flow-run
+    except IndexError:
+        flow_id = statline_flow.register(
+            project_name="nl_open_data", version_group_id="statline_bq"
+        )
 
     # Run locally
     # ids = ["83583ned"]

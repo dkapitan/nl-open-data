@@ -1,4 +1,5 @@
 from nl_open_data.config import config
+import sys
 from datetime import datetime
 from prefect import Client
 
@@ -28,6 +29,16 @@ statline_parameters = {
     "gcp_env": GCP_ENV,
     "force": FORCE,
 }
-flow_run_id = client.create_flow_run(
-    version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
-)
+
+try:
+    flow_run_id = client.create_flow_run(
+        version_group_id=STATLINE_VERSION_GROUP_ID,
+        parameters=statline_parameters,
+        labels=sys.argv[1:],
+    )
+
+except IndexError:
+    flow_run_id = client.create_flow_run(
+        version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters,
+    )
+

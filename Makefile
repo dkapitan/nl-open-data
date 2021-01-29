@@ -25,13 +25,14 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 INSTANCE_NAME := nl-open-data-vm-2
 
 gcloud-start-instance: # TODO: Change ssh line (and general setup?) to not use `amigalmail` as user
-	gcloud compute instances start INSTANCE_NAME
+	gcloud compute instances start $(INSTANCE_NAME)
 	sleep 30
 
 gcloud-start-agent:
 	gcloud compute ssh amitgalmail@nl-open-data-vm-2
 	cd nl-open-data/
 	poetry shell
+	sleep 10
 	prefect agent local start
 
 help:
