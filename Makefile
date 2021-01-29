@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-test clean-pyc clean-build docs help gcloud-start-instance gcloud-start-agent gcloud-run-flow
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -22,6 +22,17 @@ endef
 export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
+INSTANCE_NAME := nl-open-data-vm-2
+
+gcloud-start-instance: # TODO: Change ssh line (and general setup?) to not use `amigalmail` as user
+	gcloud compute instances start INSTANCE_NAME
+	sleep 30
+
+gcloud-start-agent:
+	gcloud compute ssh amitgalmail@nl-open-data-vm-2
+	cd nl-open-data/
+	poetry shell
+	prefect agent local start
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
