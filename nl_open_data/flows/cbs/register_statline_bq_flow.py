@@ -50,7 +50,7 @@ get_from_meta = task(get_from_meta)
 get_gcp_modified = task(get_gcp_modified)
 skip_dataset = task(skip_dataset)
 create_named_dir = task(create_named_dir)
-tables_to_parquet = task(tables_to_parquet)
+tables_to_parquet = task(tables_to_parquet, log_stdout=True)
 get_column_descriptions = task(get_column_descriptions)
 dict_to_json_file = task(dict_to_json_file)
 get_file_names = task(get_file_names)
@@ -191,7 +191,7 @@ with Flow("statline-bq") as statline_flow:
 
 if __name__ == "__main__":
     # Register flow
-    statline_flow.executor = DaskExecutor()
+    # statline_flow.executor = DaskExecutor()
     flow_id = statline_flow.register(
         project_name="nl_open_data", version_group_id="statline_bq"
     )

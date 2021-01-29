@@ -29,5 +29,7 @@ statline_parameters = {
     "force": FORCE,
 }
 flow_run_id = client.create_flow_run(
-    version_group_id=STATLINE_VERSION_GROUP_ID, parameters=statline_parameters
+    version_group_id=STATLINE_VERSION_GROUP_ID,
+    run_name=RUN_NAME,
+    parameters=statline_parameters,
 )

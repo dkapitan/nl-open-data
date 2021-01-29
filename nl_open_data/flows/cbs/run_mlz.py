@@ -12,7 +12,8 @@ from prefect import Client
 TENANT_SLUG = "dataverbinders"
 
 # flow parameters
-ODATA_MLZ = ["40061NED", "40060NED"]
+ODATA_MLZ = ["40060NED"]
+# ODATA_MLZ = ["40061NED", "40060NED"]
 SOURCE = "mlz"
 THIRD_PARTY = True
 GCP_ENV = "dev"
